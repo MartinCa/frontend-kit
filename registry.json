@@ -1,0 +1,81 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "martinca",
+  "homepage": "https://github.com/MartinCa/frontend-kit",
+  "items": [
+    {
+      "name": "conventions",
+      "type": "registry:file",
+      "title": "Frontend conventions",
+      "description": "DESIGN.md and the AGENTS.md stub that points at it. Install this first in any new project.",
+      "files": [
+        {
+          "path": "docs/DESIGN.md",
+          "type": "registry:file",
+          "target": "DESIGN.md"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "type": "registry:file",
+          "target": "AGENTS.md"
+        }
+      ]
+    },
+    {
+      "name": "agent-skill",
+      "type": "registry:file",
+      "title": "Conventions skill (project-scope)",
+      "description": "Checks the conventions skill into the repo so it loads in ephemeral cloud sandboxes (Claude Code on web and mobile) with no install step.",
+      "files": [
+        {
+          "path": "plugins/frontend-conventions/skills/frontend-conventions/SKILL.md",
+          "type": "registry:file",
+          "target": ".claude/skills/frontend-conventions/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "api-client",
+      "type": "registry:lib",
+      "title": "API client",
+      "description": "Typed fetch wrapper with RFC 9457 problem+json error parsing. The only file that knows the base URL.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "src/lib/api.ts",
+          "type": "registry:lib",
+          "target": "lib/api.ts"
+        }
+      ]
+    },
+    {
+      "name": "query-setup",
+      "type": "registry:lib",
+      "title": "TanStack Query defaults",
+      "description": "Shared QueryClient configuration so retry, staleness and refetch behaviour is identical everywhere.",
+      "dependencies": [
+        "@tanstack/react-query"
+      ],
+      "files": [
+        {
+          "path": "src/lib/query.ts",
+          "type": "registry:lib",
+          "target": "lib/query.ts"
+        }
+      ]
+    },
+    {
+      "name": "theme",
+      "type": "registry:file",
+      "title": "Theme tokens",
+      "description": "Semantic CSS variables for light and dark. Import after the Tailwind entry point.",
+      "files": [
+        {
+          "path": "src/styles/theme.css",
+          "type": "registry:file",
+          "target": "styles/theme.css"
+        }
+      ]
+    }
+  ]
+}

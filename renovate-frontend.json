@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Frontend preset. Extend from renovate-config alongside the base preset.",
+  "packageRules": [
+    {
+      "description": "Config package: automerge patch and minor, it only ever tightens lint rules",
+      "matchPackageNames": ["@martinca/frontend-config"],
+      "automerge": true,
+      "matchUpdateTypes": ["patch", "minor"]
+    },
+    {
+      "description": "Group the React runtime so types and runtime move together",
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "description": "Group TanStack, they release in lockstep",
+      "groupName": "tanstack",
+      "matchPackageNames": ["/^@tanstack//"]
+    },
+    {
+      "description": "Primitives are pulled in by shadcn components; bump them together and review as one",
+      "groupName": "ui primitives",
+      "matchPackageNames": ["/^@base-ui-components//", "/^@radix-ui//"]
+    },
+    {
+      "description": "Tooling churns; batch it weekly rather than PR-per-bump",
+      "groupName": "frontend tooling",
+      "matchPackageNames": [
+        "eslint",
+        "/^@typescript-eslint//",
+        "typescript-eslint",
+        "prettier",
+        "/^prettier-plugin-/",
+        "vite",
+        "/^@vitejs//",
+        "vitest"
+      ],
+      "schedule": ["before 6am on monday"]
+    }
+  ]
+}

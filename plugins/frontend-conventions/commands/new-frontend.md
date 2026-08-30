@@ -1,0 +1,23 @@
+---
+description: Scaffold a new frontend project using the house stack and conventions.
+---
+
+Scaffold a new frontend in the current directory following the house conventions.
+
+Run these in order, stopping to report if any step fails:
+
+1. `pnpm dlx shadcn@latest init --template vite --base base --preset $PRESET`
+   (ask for the preset code if `$PRESET` is not set in the environment; it is
+   recorded in the frontend-kit README)
+2. `pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions`
+3. `pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client MartinCa/frontend-kit/query-setup MartinCa/frontend-kit/theme`
+4. `pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss typescript`
+5. `pnpm add @tanstack/react-query @tanstack/react-router zustand react-hook-form zod date-fns lucide-react`
+6. `pnpm dlx skills add shadcn/ui`
+
+Then wire up the config files as described in the frontend-kit SETUP.md:
+`eslint.config.js`, `prettier.config.js`, `tsconfig.json` extending the shared
+base, and the `/api` dev proxy in `vite.config.ts`.
+
+Finally, fill in the project-specific section at the bottom of `DESIGN.md` by
+asking what the app is, who uses it, and which backend it talks to. Do not guess.

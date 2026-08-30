@@ -1,0 +1,11 @@
+{
+  "name": "frontend-conventions",
+  "version": "0.1.0",
+  "description": "React + TypeScript + shadcn/ui + Tailwind house conventions. Loads the shared DESIGN.md rules so every project is built the same way.",
+  "author": {
+    "name": "Martin Caspersen",
+    "url": "https://github.com/MartinCa"
+  },
+  "repository": "https://github.com/MartinCa/frontend-kit",
+  "license": "MIT"
+}

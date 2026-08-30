@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "martinca",
+  "owner": {
+    "name": "Martin Caspersen",
+    "url": "https://github.com/MartinCa"
+  },
+  "plugins": [
+    {
+      "name": "frontend-conventions",
+      "source": "./plugins/frontend-conventions",
+      "description": "React + TypeScript + shadcn/ui + Tailwind house conventions, shared across all personal projects.",
+      "category": "development",
+      "tags": ["react", "typescript", "shadcn", "tailwind", "frontend"]
+    }
+  ]
+}
