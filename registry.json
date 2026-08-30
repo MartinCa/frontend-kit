@@ -52,11 +52,14 @@
       "name": "query-setup",
       "type": "registry:lib",
       "title": "TanStack Query defaults",
-      "description": "Shared QueryClient configuration so retry, staleness and refetch behaviour is identical everywhere.",
-      "dependencies": [
-        "@tanstack/react-query"
-      ],
+      "description": "Shared QueryClient configuration so retry, staleness and refetch behaviour is identical everywhere. Bundles api.ts because query.ts imports ApiError from it — a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
+      "dependencies": ["@tanstack/react-query"],
       "files": [
+        {
+          "path": "src/lib/api.ts",
+          "type": "registry:lib",
+          "target": "lib/api.ts"
+        },
         {
           "path": "src/lib/query.ts",
           "type": "registry:lib",
@@ -97,9 +100,7 @@
       "title": "Theme toggle button",
       "description": "Sun/moon icon button that flips between light and dark. Bundles theme-provider.tsx so it installs standalone — a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
       "registryDependencies": ["button"],
-      "dependencies": [
-        "lucide-react"
-      ],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "src/components/theme-provider.tsx",
