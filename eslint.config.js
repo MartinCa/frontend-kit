@@ -47,10 +47,7 @@ export default function config({ ignores = [] } = {}) {
       },
       rules: {
         ...reactHooks.configs.recommended.rules,
-        "react-refresh/only-export-components": [
-          "warn",
-          { allowConstantExport: true },
-        ],
+        "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
         // --- DESIGN.md section 1: TypeScript is strict, and stays strict ---
         "@typescript-eslint/no-explicit-any": "error",
@@ -99,8 +96,13 @@ export default function config({ ignores = [] } = {}) {
         "no-restricted-syntax": [
           "error",
           {
+            // Both call shapes: create<S>((set) => ...) and the curried form
+            // create<S>()((set) => ...) that the Zustand TypeScript docs use.
+            // In the curried form the initializer is an argument of the *outer*
+            // call, so `callee.name` is undefined there and only
+            // `callee.callee.name` matches.
             selector:
-              "CallExpression[callee.name='create'] CallExpression[callee.name='fetch']",
+              "CallExpression[callee.name='create'] CallExpression[callee.name='fetch'], CallExpression[callee.callee.name='create'] CallExpression[callee.name='fetch']",
             message:
               "Do not fetch inside a Zustand store. Server state belongs in TanStack Query. See DESIGN.md section 2.",
           },
@@ -138,10 +140,18 @@ export default function config({ ignores = [] } = {}) {
     },
 
     // Config files run in Node and are not type-checked against the app project.
+    //
+    // disableTypeChecked carries its own `languageOptions` (parserOptions that
+    // switch the type-aware parser off), so it has to be spread *before* ours —
+    // spreading it after replaces the whole key and silently drops the Node
+    // globals, which shows up as no-undef on `process` in a .js config file.
     {
-      files: ["*.config.{js,ts}", "vite.config.ts"],
-      languageOptions: { globals: globals.node },
+      files: ["*.config.{js,ts}"],
       ...tseslint.configs.disableTypeChecked,
+      languageOptions: {
+        ...tseslint.configs.disableTypeChecked.languageOptions,
+        globals: globals.node,
+      },
     },
 
     prettier,

@@ -22,7 +22,15 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undef
 
 const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
+/**
+ * Guarded because this runs during render (in the useState initializer below),
+ * not just in an effect. DESIGN.md section 1 allows Next.js where SSR is a
+ * stated requirement, and there this executes on the server with no `window`.
+ * Light is the right server default: it matches what the markup renders before
+ * the effect below applies the real preference.
+ */
 function systemPrefersDark(): boolean {
+  if (typeof window === "undefined") return false;
   return window.matchMedia(DARK_MEDIA_QUERY).matches;
 }
 
