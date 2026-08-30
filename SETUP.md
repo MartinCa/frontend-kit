@@ -332,6 +332,50 @@ export { default } from "@martinrun/frontend-config/prettier";
 }
 ```
 
+**pnpm-workspace.yaml** — pnpm's supply-chain settings. pnpm 11 turns
+protection on by default: `minimumReleaseAge` is `1440` minutes, up from `0` in
+pnpm 10, so any lockfile entry published in the last day is rejected at install
+time. That fails CI on transitive versions nobody chose deliberately, and it
+arrives with a pnpm upgrade rather than with any change of yours.
+
+```yaml
+trustLockfile: true
+minimumReleaseAgeExclude:
+  - "@martinrun/*"
+```
+
+`trustLockfile` stops pnpm re-applying the policy to an already-committed
+lockfile on every install. The policy still runs when the lockfile is
+*written*, which is where it catches a suspicious release; re-running it at
+install time against a reviewed lockfile is the part that breaks builds.
+This one is a judgement call rather than an automatic default — pnpm's caveat
+is "leave this `false` whenever outside collaborators can edit the lockfile."
+True for a solo private repo, false the moment a project takes outside PRs, so
+decide per project rather than copying it in reflexively.
+
+`minimumReleaseAgeExclude` covers our own package: a release of
+`@martinrun/frontend-config` is ours and reviewed before it ships, so it need
+not sit in quarantine for a day before a project can adopt it.
+
+**Do not set `minimumReleaseAge` itself.** Pinning it to `1440` looks like the
+tidy "be explicit" move and is a trap: it applies under pnpm 10 too, where the
+default is `0` and where `trustLockfile` does not exist (11.3+), so the policy
+bites with no way to satisfy it. Let each pnpm version use its own default.
+
+**If the project builds in Docker, the file has to be in the dependency
+layer.** This is the part that is easy to miss, because the config is correct
+in the repo and the build still fails:
+
+```dockerfile
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+```
+
+Miss it and `pnpm install` inside the image runs with pnpm's defaults and
+rejects the lockfile, while the same command passes on your machine — where
+the file is obviously present. Testing the settings is not the same as testing
+the build; reproduce the `COPY` set in a scratch directory if in doubt.
+
 **package.json scripts** — DESIGN.md section 1 says lint is enforced in CI, and
 that is only true with `--max-warnings 0`. Some rules in the shared config are
 deliberately warnings (`no-console`, `react-refresh/only-export-components`)
