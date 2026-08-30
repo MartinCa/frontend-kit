@@ -19,5 +19,11 @@ Then wire up the config files as described in the frontend-kit SETUP.md:
 `eslint.config.js`, `prettier.config.js`, `tsconfig.json` extending the shared
 base, and the `/api` dev proxy in `vite.config.ts`.
 
+Wrap the app in `<ThemeProvider>` from `@/components/theme-provider` in
+`main.tsx` (see SETUP.md Part 6). This step is easy to skip because the app
+renders fine either way — it just always renders light, since `theme.css`'s
+`.dark` class is never toggled without it, regardless of the system
+preference. Installing `theme-provider` alone does not do this.
+
 Finally, fill in the project-specific section at the bottom of `DESIGN.md` by
 asking what the app is, who uses it, and which backend it talks to. Do not guess.

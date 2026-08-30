@@ -65,6 +65,11 @@ pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme         # theme tokens
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme-provider # theme provider & dark mode support
 ```
 
+`theme-provider` does nothing on its own — wrap the app in `<ThemeProvider>`
+from `@/components/theme-provider` in `main.tsx`, or dark mode silently never
+activates (the app renders light no matter the system preference, and
+nothing errors to tell you why).
+
 Lint, TypeScript, and Prettier config come from `@martinca/frontend-config`.
 
 ## Talking to the backend
