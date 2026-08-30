@@ -51,8 +51,15 @@ free for private packages and needs no npmjs account.
 
 ```sh
 npm version 0.1.0
-git push --follow-tags     # the publish workflow fires on v* tags
+git push
+gh release create v0.1.0 --generate-notes   # the publish workflow fires on release publish
 ```
+
+The workflow triggers on a published GitHub Release, not on the tag push
+itself — `npm version` creates the tag locally, but nothing publishes until
+you create the release (tag pushes alone no longer trigger it). Marking a
+release as a pre-release skips publishing; `workflow_dispatch` is still there
+for a manual re-run if a publish needs retriggering.
 
 Consuming projects need one line in `.npmrc`:
 

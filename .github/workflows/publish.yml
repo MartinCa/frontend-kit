@@ -1,8 +1,8 @@
 name: Publish config package
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -11,9 +11,12 @@ permissions:
 
 jobs:
   publish:
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -21,11 +24,12 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: "@martinca"
 
-      - name: Verify tag matches package version
+      - name: Verify release tag matches package version
         run: |
+          tag="${{ github.event.release.tag_name }}"
           pkg="v$(node -p "require('./package.json').version")"
-          if [ "$pkg" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${pkg}" >&2
+          if [ -n "$tag" ] && [ "$pkg" != "$tag" ]; then
+            echo "Release tag $tag does not match package.json version $pkg" >&2
             exit 1
           fi
 
