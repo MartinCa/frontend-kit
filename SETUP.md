@@ -109,9 +109,23 @@ after it goes back to the release flow above.
 Then, at npmjs.com → the package → Settings → Trusted Publisher → GitHub
 Actions, fill in: organization or user `MartinCa`, repository `frontend-kit`,
 workflow filename `publish.yml`, environment blank. Every later release goes
-through the workflow with no credential. Setting "Require two-factor
-authentication and disallow tokens" on the package afterwards closes the door
-the bootstrap publish came through.
+through the workflow with no credential.
+
+Order matters for the last step. "Require two-factor authentication and
+disallow tokens" closes the door the bootstrap publish came through — but do it
+only **after** a release has actually published through the workflow, not
+straight after configuring the trusted publisher. There is no dry run for OIDC:
+the first real release is the test, and until it passes, the token route is the
+only way back in.
+
+So the sequence is: bootstrap publish by hand → configure the trusted publisher
+→ cut a normal release and watch it publish with no credential → then lock
+tokens out.
+
+If that first workflow release fails at the publish step, the bump commit has
+already landed on the default branch. That is recoverable: re-running the
+workflow finds `package.json` already at the target version, makes no second
+commit, and retries the publish.
 
 **`actions/setup-node` must not be given `registry-url`.** With `registry-url`
 set and no `NODE_AUTH_TOKEN`, it writes an empty `_authToken=` line into
