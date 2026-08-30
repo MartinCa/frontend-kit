@@ -17,8 +17,9 @@ skill is the fallback and the summary; the file is the contract.
 
 - TypeScript, `strict: true`. No `any`, no untyped API responses.
 - React function components and hooks. No class components.
-- Vite + TanStack Router by default. Next.js only when SSR or SEO is a stated
-  requirement — most of these projects are internal tools behind auth.
+- Vite + TanStack Router by default (with `src/routeTree.gen.ts` committed as a
+  vendored contract). Next.js only when SSR or SEO is a stated requirement —
+  most of these projects are internal tools behind auth.
 - shadcn/ui on Base UI primitives, pinned in `components.json`. Never mix bases.
 - Tailwind with semantic theme tokens. Never a raw hex or `bg-blue-500`.
 - TanStack Query for anything from a server. Zustand only for cross-cutting
@@ -42,13 +43,18 @@ from before choosing a tool:
 
 React Context is for dependency injection, not for values that change often.
 
-## shadcn components are vendored
+## shadcn components and generated files are vendored
 
 Files in `src/components/ui/` are installed by the CLI and treated as
 read-only. To change appearance, override theme CSS variables or target
 `[data-slot="..."]`. To change behaviour, wrap the component in
 `src/components/`. Hand-editing vendor files makes future `--overwrite` updates
 a merge conflict.
+
+Generated files (`src/routeTree.gen.ts`, `src/lib/api-types.ts`) are also
+committed vendored contracts — never hand-edit them, always regenerate.
+Committing `routeTree.gen.ts` ensures fresh clones have complete route types for
+IDEs and type-aware linting without an upfront build.
 
 Use `shadcn docs <component>` to get the current API rather than recalling
 props. Use `--dry-run` or `--view` before writing files.
