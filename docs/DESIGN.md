@@ -128,7 +128,10 @@ src/
   `text-muted-foreground`, `border-border`, `bg-destructive`). A hex value or a raw
   `bg-blue-500` in a component is a bug — it will break in dark mode and it breaks theming
   across projects.
-- Dark mode is a requirement, not a feature. It works for free if the token rule is followed.
+- Dark mode is a requirement, not a feature. Styling is free if the token rule is followed, but
+  the app must still be wrapped in `MartinCa/frontend-kit/theme-provider`'s `<ThemeProvider>` —
+  the `.dark` class in `theme.css` only applies when something toggles it. Without the provider
+  the app always renders light, regardless of the system preference.
 - Spacing uses the Tailwind scale. No arbitrary values (`p-[13px]`) without a comment.
 - Compose conditional classes with `cn()`. Never build class strings with template literals
   and ternaries inline.

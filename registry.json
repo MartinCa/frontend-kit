@@ -76,6 +76,37 @@
           "target": "styles/theme.css"
         }
       ]
+    },
+    {
+      "name": "theme-provider",
+      "type": "registry:component",
+      "title": "Theme provider",
+      "description": "Defaults to the OS light/dark preference and keeps the .dark class in sync with it (including live OS changes), with an optional persisted light/dark override. Wrap the app in <ThemeProvider> — without it the .dark class in theme.css is never toggled and the app always renders light, regardless of the system setting.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "src/components/theme-provider.tsx",
+          "type": "registry:component",
+          "target": "components/theme-provider.tsx"
+        }
+      ]
+    },
+    {
+      "name": "theme-toggle",
+      "type": "registry:component",
+      "title": "Theme toggle button",
+      "description": "Sun/moon icon button that flips between light and dark. Requires theme-provider.",
+      "registryDependencies": ["theme-provider", "button"],
+      "dependencies": [
+        "lucide-react"
+      ],
+      "files": [
+        {
+          "path": "src/components/theme-toggle.tsx",
+          "type": "registry:component",
+          "target": "components/theme-toggle.tsx"
+        }
+      ]
     }
   ]
 }

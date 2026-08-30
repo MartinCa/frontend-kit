@@ -203,7 +203,8 @@ pnpm dlx shadcn@latest init --template vite --base base --preset <your-code>
 pnpm dlx shadcn@latest add \
   MartinCa/frontend-kit/conventions \
   MartinCa/frontend-kit/api-client \
-  MartinCa/frontend-kit/query-setup
+  MartinCa/frontend-kit/query-setup \
+  MartinCa/frontend-kit/theme-provider
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
@@ -261,6 +262,42 @@ export default defineConfig({
     },
   },
 });
+```
+
+**Wire up dark mode.** `theme.css`'s dark values only apply when something adds
+a `.dark` class — nothing does that automatically. Wrap the app in
+`ThemeProvider` (defaults to the OS preference, with an optional persisted
+override):
+
+```tsx
+// main.tsx
+import { ThemeProvider } from "@/components/theme-provider";
+
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>,
+);
+```
+
+Add `MartinCa/frontend-kit/theme-toggle` too if the project wants a manual
+light/dark switch in its nav — it renders nothing without `ThemeProvider`
+above it in the tree.
+
+`ThemeProvider` applies the class in a `useEffect`, which runs after first
+paint — expect one frame of the wrong theme on a hard reload. If that flash
+bothers you, add a blocking inline script in `index.html`, before any other
+`<script>`, that reads `localStorage` the same way and sets the class before
+React ever mounts:
+
+```html
+<script>
+  (function () {
+    var stored = localStorage.getItem("theme");
+    var dark = stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
+  })();
+</script>
 ```
 
 Finally, fill in section 9 of `DESIGN.md`. That section is the only part the

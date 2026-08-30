@@ -91,7 +91,13 @@ of adopting a lint config.
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme   # only if not already on the preset
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme-provider
 ```
+
+Wrap the app in `<ThemeProvider>` (see SETUP.md Part 6) right after installing
+it. This is easy to skip in a migration since the app already renders fine —
+it just always renders light, because `theme.css`'s `.dark` class is never
+toggled without it, regardless of the system preference.
 
 Then, incrementally:
 
