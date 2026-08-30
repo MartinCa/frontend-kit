@@ -95,12 +95,17 @@
       "name": "theme-toggle",
       "type": "registry:component",
       "title": "Theme toggle button",
-      "description": "Sun/moon icon button that flips between light and dark. Requires theme-provider.",
-      "registryDependencies": ["theme-provider", "button"],
+      "description": "Sun/moon icon button that flips between light and dark. Bundles theme-provider.tsx so it installs standalone — a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
+      "registryDependencies": ["button"],
       "dependencies": [
         "lucide-react"
       ],
       "files": [
+        {
+          "path": "src/components/theme-provider.tsx",
+          "type": "registry:component",
+          "target": "components/theme-provider.tsx"
+        },
         {
           "path": "src/components/theme-toggle.tsx",
           "type": "registry:component",

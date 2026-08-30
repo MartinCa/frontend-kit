@@ -117,9 +117,11 @@ export default function config({ ignores = [] } = {}) {
       },
     },
 
-    // Vendored shadcn components are not ours to police.
+    // Vendored shadcn components — and the kit's own vendored components,
+    // like theme-provider.tsx exporting both ThemeProvider and useTheme —
+    // are not ours to police.
     {
-      files: ["src/components/ui/**"],
+      files: ["src/components/ui/**", "src/components/theme-provider.tsx"],
       rules: {
         "no-restricted-imports": "off",
         "no-restricted-syntax": "off",
