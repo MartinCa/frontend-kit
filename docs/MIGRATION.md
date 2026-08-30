@@ -107,7 +107,8 @@ web/mobile actually loads.
 
 ## 6. Renovate
 
-Add the frontend preset to this repo's Renovate config:
+Add the frontend preset to this repo's Renovate config, **alongside** the
+base `renovate-config` preset — not instead of it:
 
 ```json
 {
@@ -117,6 +118,11 @@ Add the frontend preset to this repo's Renovate config:
   ]
 }
 ```
+
+If the project already has a `renovate.json`/`.github/renovate.json` with its
+own `extends` array (the base preset, or anything else), add the
+`frontend-kit:renovate-frontend` line into that existing array. Don't
+replace the file or drop what was already there.
 
 ## 7. Commit shape
 
@@ -169,7 +175,12 @@ it. In short:
    available for new code and flag files that should eventually move over.
 6. Install MartinCa/frontend-kit/agent-skill so cloud sessions see the
    conventions, and commit it.
-7. Keep changes in separate, reviewable commits: config wiring, vendored
+7. Add "github>MartinCa/frontend-kit:renovate-frontend" to this repo's
+   Renovate config, alongside the base "github>MartinCa/renovate-config"
+   preset — not replacing it or anything else already in the extends array.
+   If there's no renovate.json yet, ask me before creating one; this repo
+   may already get Renovate config from elsewhere.
+8. Keep changes in separate, reviewable commits: config wiring, vendored
    shadcn output (untouched, its own commit), and nothing else. Stop and ask
    me before touching any file outside what this list covers, and before any
    change that would alter existing UI behavior.
