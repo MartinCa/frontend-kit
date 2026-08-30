@@ -22,6 +22,18 @@ part is owned by this repo.
   recalling props from memory; the Base UI and Radix APIs differ.
 - `shadcn add <name> --dry-run` / `--view` — inspect before writing files.
 
+## Dependency versions
+
+Install packages with the package manager (`pnpm add <pkg>`, no version
+pin) and let it resolve the current release. `pnpm add` still writes a
+range into `package.json` — that's fine, and Renovate keeps that range
+current from here on. What to avoid is typing the number yourself: do
+not hand-write a version into `package.json` from memory — training data
+lags, and a remembered version is routinely a major or two behind. If a
+specific version genuinely matters (a peer dependency constraint, a
+known-bad release), say so and name the reason in the commit, don't just
+guess a number that looks plausible.
+
 ## House rules that are linted
 
 `pnpm lint` enforces the mechanical parts of `DESIGN.md`: no `any`, no deep
