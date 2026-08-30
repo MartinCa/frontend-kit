@@ -31,7 +31,7 @@
     "eslint": ">=9",
     "prettier": ">=3",
     "prettier-plugin-tailwindcss": ">=0.6",
-    "typescript": ">=5.5"
+    "typescript": ">=5.5 <7"
   },
   "dependencies": {
     "@eslint/js": "^10.0.0",

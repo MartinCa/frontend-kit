@@ -68,3 +68,8 @@ test("vendored directories are exempt", async () => {
   );
   assert.equal(config.rules["no-restricted-syntax"][0], 0);
 });
+
+test("generated route tree files are ignored", async () => {
+  const isIgnored = await eslint.isPathIgnored(path.join(fixtures, "src/routeTree.gen.ts"));
+  assert.equal(isIgnored, true, "src/routeTree.gen.ts must be ignored by eslint");
+});

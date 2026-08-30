@@ -37,6 +37,11 @@
         "vitest"
       ],
       "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Keep TypeScript on v6 until typescript-eslint adds TypeScript 7 support",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
     }
   ]
 }

@@ -18,7 +18,9 @@ Run these in order, stopping to report if any step fails:
 Then wire up the config files as described in the frontend-kit SETUP.md:
 `eslint.config.js`, `prettier.config.js`, `tsconfig.json` extending the shared
 base, `pnpm-workspace.yaml` for pnpm's supply-chain settings, and the `/api`
-dev proxy in `vite.config.ts`.
+dev proxy in `vite.config.ts`. Ensure `.gitignore` does not ignore
+`src/routeTree.gen.ts` — it is a committed vendored contract file required
+for type-aware linting on fresh clones.
 
 Wrap the app in `<ThemeProvider>` from `@/components/theme-provider` in
 `main.tsx` (see SETUP.md Part 6). This step is easy to skip because the app

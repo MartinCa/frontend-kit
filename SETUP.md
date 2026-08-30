@@ -403,6 +403,13 @@ export default defineConfig({
 });
 ```
 
+**.gitignore** — Ensure `src/routeTree.gen.ts` is **not** ignored. TanStack Router
+treats this file as part of application source code, and DESIGN.md establishes it
+as a checked-in, vendored contract file (matching `src/lib/api-types.ts`). Committing
+it ensures fresh clones have complete route types for IDEs and type-aware linting
+(`projectService: true`) without requiring an upfront build. Only ignore build
+output (`dist/`), `node_modules/`, and logs.
+
 **Wire up dark mode.** `theme.css`'s dark values only apply when something adds
 a `.dark` class — nothing does that automatically. Wrap the app in
 `ThemeProvider` (defaults to the OS preference, with an optional persisted
@@ -469,6 +476,10 @@ backend change before the UI does.
 Both frameworks emit the spec themselves — FastAPI from its Pydantic models,
 ASP.NET Core from its built-in OpenAPI support — so there is no schema to
 maintain by hand on either side.
+
+Similarly, with TanStack Router, `src/routeTree.gen.ts` is committed to Git as a
+vendored contract file. The TanStack Router plugin regenerates it as routes change,
+keeping route types in sync.
 
 ---
 

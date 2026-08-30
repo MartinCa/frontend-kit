@@ -53,9 +53,11 @@ numbers into `package.json` by hand. (`pnpm add` still writes a range;
 Renovate is what keeps it current from here.) An agent doing this from
 memory tends to guess an old version.
 
-Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Run
-`pnpm lint` once and read the count, don't fix it yet — you need to know how
-big the gap is before deciding how to close it.
+Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Ensure
+`.gitignore` does not ignore `src/routeTree.gen.ts` (it must be committed as a
+vendored contract file for type-aware linting). Run `pnpm lint` once and read the
+count, don't fix it yet — you need to know how big the gap is before deciding
+how to close it.
 
 The package is public on npmjs, so CI needs nothing extra — no `.npmrc`, no
 token, no BuildKit secret, whether the project installs in a workflow or in a
@@ -183,8 +185,10 @@ it. In short:
    the backend, and the pagination convention — do not guess these.
    List every item from step 1 you are not fixing now under "Deviations."
 3. Add @martinrun/frontend-config as a dev dependency and wire eslint.config.js,
-   prettier.config.js, and tsconfig.json to extend it. Run the linter and
-   report the violation count — do not silently disable rules to make it pass.
+   prettier.config.js, and tsconfig.json to extend it. Ensure .gitignore does
+   not ignore src/routeTree.gen.ts (it must be committed for type-aware linting).
+   Run the linter and report the violation count — do not silently disable rules
+   to make it pass.
    Whenever you add a dependency in this migration, install it with the
    package manager rather than typing a version number into package.json
    from memory — that number is routinely out of date. `pnpm add` still
