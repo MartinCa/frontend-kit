@@ -101,7 +101,7 @@ Record the code in this repo's README. It is the single string that carries your
 visual identity into any new project, any machine, and any prompt:
 
 ```sh
-pnpm dlx shadcn@latest init --preset a1Dg5eFl
+pnpm dlx shadcn@latest init --preset b0   # this repo's actual code — see README
 ```
 
 Changing your mind later is cheap. Re-running `init --preset` in an existing app
