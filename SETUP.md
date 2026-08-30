@@ -85,15 +85,17 @@ echo "//npm.pkg.github.com/:_authToken=$(gh auth token)" >> ~/.npmrc
 
 **Naming the CI secret:** GitHub Actions rejects any repository/organization
 secret whose name starts with `GITHUB_` — that prefix is reserved for its own
-automatic variables. Pick something else for the secret itself (e.g.
-`GH_PACKAGES_TOKEN`); the env var name you reference in `.npmrc`
-(`GITHUB_PACKAGES_TOKEN` or whatever you called it) is unaffected by this —
-that restriction only applies to the secret's name in Actions settings, map
-one to the other in the workflow:
+automatic variables. Pick something else for the secret itself; name it after
+what it's actually for rather than something generic like `GH_PACKAGES_TOKEN`
+that invites collisions with other packages tokens a repo might need —
+`FRONTEND_KIT_PACKAGES_TOKEN` is explicit and won't clash. The env var name
+you reference in `.npmrc` (`GITHUB_PACKAGES_TOKEN` or whatever you called it)
+is unaffected by this — that restriction only applies to the secret's name in
+Actions settings, map one to the other in the workflow:
 
 ```yaml
 - name: Build
-  run: GITHUB_PACKAGES_TOKEN=${{ secrets.GH_PACKAGES_TOKEN }} pnpm install --frozen-lockfile
+  run: GITHUB_PACKAGES_TOKEN=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }} pnpm install --frozen-lockfile
 ```
 
 If the project builds through Docker (multi-stage build installing the
@@ -109,7 +111,7 @@ RUN --mount=type=secret,id=github_packages_token \
 - uses: docker/build-push-action@...
   with:
     secrets: |
-      github_packages_token=${{ secrets.GH_PACKAGES_TOKEN }}
+      github_packages_token=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}
 ```
 
 Note PRs from forks never see this secret (GitHub withholds all secrets from
