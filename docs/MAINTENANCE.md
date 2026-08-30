@@ -8,7 +8,7 @@ migration that looks more like [MIGRATION.md](./MIGRATION.md) than a diff.
 
 | What | How |
 |---|---|
-| ESLint/Prettier/tsconfig rule changes | Renovate opens a PR when `@martinca/frontend-config` bumps. Patch/minor auto-merges (see `renovate-frontend.json`). |
+| ESLint/Prettier/tsconfig rule changes | Renovate opens a PR when `@martinrun/frontend-config` bumps. Patch/minor auto-merges (see `renovate-frontend.json`). |
 | Agent behavior (the conventions skill) | Local terminal: automatic on the next `claude plugin update` / marketplace refresh. Nothing to do per project. |
 | Primitive libraries under shadcn components (Base UI/Radix) | Renovate groups and bumps them; review like any dependency PR. |
 
@@ -21,10 +21,15 @@ Pull the parts of the kit that are read from source, not from a package:
 
 ```sh
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions --overwrite
-pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client --overwrite
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup --overwrite
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme --overwrite
 git diff        # reconcile against project-specific edits, section 9 of DESIGN.md
 ```
+
+`query-setup` bundles `lib/api.ts` as well as `lib/query.ts` (`query.ts`
+imports `ApiError`, and a registry item cannot reference another item in the
+same registry — SETUP.md Part 9), so it refreshes the API client too. Running
+`api-client --overwrite` separately is redundant, not wrong.
 
 If the project vendored the agent skill for cloud sessions (Part 8 of
 SETUP.md), refresh it the same way and commit:
@@ -75,12 +80,10 @@ pnpm run api:types
 git diff src/lib/api-types.ts
 ```
 
-**Tokens.** If the project uses a `GH_TOKEN` for a private registry/package
-read (fine-grained PAT, `Contents: Read-only`), it has an expiry. Rotate it
-before it lapses — expiry shows up as `shadcn add`/`npm install` failing with
-an auth error, not a clear "token expired" message. If this becomes annoying
-across several repos, revisit making `frontend-kit` public instead (SETUP.md,
-"The private-repo question").
+**Tokens.** None. The config package is public on npmjs and `frontend-kit` is
+a public repo, so neither the package install nor a shadcn registry read needs
+a credential. If a `GH_TOKEN` is still set anywhere for this kit, it is left
+over from the GitHub Packages era and can go.
 
 ## Signals something has drifted
 
@@ -94,3 +97,7 @@ across several repos, revisit making `frontend-kit` public instead (SETUP.md,
 - Two projects solving the same problem two different ways outside what
   DESIGN.md governs — that's a signal to add a new registry item or convention
   upstream, not to let it happen a third time.
+- `SKILL.md` changed in frontend-kit but `plugins/frontend-conventions/.claude-plugin/plugin.json`
+  still shows the same version — installed plugins have nothing to compare
+  against, so the update may not reach machines that already have it. Bump the
+  plugin version in the same PR as any skill change.

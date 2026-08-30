@@ -1,0 +1,7 @@
+package-lock.json
+
+# Prose is hand-wrapped and the tables are hand-aligned to stay readable in a
+# diff. Prettier repads every table cell to the widest column, which is a large
+# cosmetic churn over the part of this repo that gets read the most. Code and
+# config below are formatted; the docs are edited by hand.
+*.md

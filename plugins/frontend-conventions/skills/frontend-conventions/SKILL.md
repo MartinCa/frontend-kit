@@ -70,7 +70,7 @@ from `@/components/theme-provider` in `main.tsx`, or dark mode silently never
 activates (the app renders light no matter the system preference, and
 nothing errors to tell you why).
 
-Lint, TypeScript, and Prettier config come from `@martinca/frontend-config`.
+Lint, TypeScript, and Prettier config come from `@martinrun/frontend-config`.
 
 ## Talking to the backend
 

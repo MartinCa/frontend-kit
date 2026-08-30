@@ -28,7 +28,7 @@ is not listed in **Allowed dependencies** without asking first.
 | Charts | shadcn/ui Charts (Recharts) | new charting lib per project |
 | Dates | `date-fns` | moment, hand-rolled parsing |
 | Tests | Vitest + Testing Library; Playwright only where a flow is worth it | Enzyme, snapshot-everything |
-| Lint/format | ESLint (typescript-eslint) + Prettier, both enforced in CI | per-file disables without a reason comment |
+| Lint/format | ESLint (typescript-eslint) + Prettier, both enforced in CI with `--max-warnings 0` | per-file disables without a reason comment; a lint job that passes on warnings |
 
 **Default to the SPA path.** Most projects here are internal tools behind auth on a
 private network. They do not need SSR, RSC, or an SEO story, and the client/server
@@ -127,7 +127,10 @@ src/
 - **Never hardcode a colour.** Use the semantic theme tokens (`bg-background`,
   `text-muted-foreground`, `border-border`, `bg-destructive`). A hex value or a raw
   `bg-blue-500` in a component is a bug — it will break in dark mode and it breaks theming
-  across projects.
+  across projects. For health and status, use the shared status tokens
+  (`text-status-ok`, `bg-status-warn`, `text-status-error`, `text-status-unknown`) rather
+  than inventing a green per project; they come from
+  `MartinCa/frontend-kit/theme` and are not part of the shadcn preset.
 - Dark mode is a requirement, not a feature. Styling is free if the token rule is followed, but
   the app must still be wrapped in `MartinCa/frontend-kit/theme-provider`'s `<ThemeProvider>` —
   the `.dark` class in `theme.css` only applies when something toggles it. Without the provider

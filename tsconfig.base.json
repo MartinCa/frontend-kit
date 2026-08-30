@@ -14,6 +14,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
+    // The one relaxed strictness flag, and deliberately so: with it on, every
+    // optional prop spread into a shadcn component or a react-hook-form field
+    // needs `| undefined` written out, which is friction on vendored code we do
+    // not control. Turn it on per project if the project's own code benefits.
     "exactOptionalPropertyTypes": false,
 
     "verbatimModuleSyntax": true,

@@ -9,7 +9,7 @@ channels because the three kinds of rule need three kinds of enforcement:
 
 | Layer | Channel | Updated by |
 |---|---|---|
-| Lint, tsconfig, Prettier | npm package `@martinca/frontend-config` on GitHub Packages | Renovate PR |
+| Lint, tsconfig, Prettier | npm package `@martinrun/frontend-config`, public on npmjs | Renovate PR |
 | DESIGN.md, shared code, tokens | shadcn registry (this repo, read by the CLI) | `shadcn add --overwrite`, deliberately |
 | Agent behaviour | Claude Code plugin marketplace (this repo) | automatically, one copy exists |
 
@@ -42,87 +42,134 @@ The token is only ever sent to `api.github.com`.
 If you would rather not deal with tokens on every machine, make this repo public.
 There is nothing secret in it — it is lint rules and a style guide.
 
+That settles the registry reads described above. The config package is a
+separate channel and needs no token either — it is public on npmjs, not on
+GitHub Packages (Part 2 explains why).
+
 ---
 
 ## Part 2 — Publish the config package
 
-The package is scoped `@martinca` and publishes to GitHub Packages, which is
-free for private packages and needs no npmjs account.
+The package is `@martinrun/frontend-config`, published public to
+registry.npmjs.org. The scope comes from the npm username `martinrun`; it is a
+namespace, not an organization, and does not need to match the GitHub owner.
+
+Public and on npmjs is a deliberate choice over GitHub Packages. GitHub's npm
+registry authenticates *every* read, public packages included — there is no
+anonymous pull — so a private-registry package drags a token into every
+consumer: a `.npmrc`, a CI secret, a BuildKit secret for Docker builds, a
+Renovate host rule, and a PAT expiry to remember. On npmjs a public package
+needs none of that. Nothing in this repo is secret; it is lint rules and a
+style guide.
+
+### Releasing
 
 ```sh
-gh release create v0.1.0 --generate-notes
+gh release create v0.2.0 --generate-notes
 ```
 
-That's the only step — no local `npm version` needed. The workflow fires on
-a published GitHub Release, reads the version from the tag (`v0.1.0` →
-`0.1.0`), bumps `package.json` to match, commits that bump straight to the
-default branch, and publishes. Marking a release as a pre-release skips
-publishing. For a one-off publish with no release at all, run the workflow
-manually (`workflow_dispatch`) and give it a version in the input field.
+That's the only step. The workflow fires on a published GitHub Release, reads
+the version from the tag (`v0.2.0` → `0.2.0`), bumps `package.json` to match,
+commits that bump to the default branch, and publishes. Marking a release as a
+pre-release skips publishing. For a one-off publish with no release, run the
+workflow manually (`workflow_dispatch`) and give it a version in the input.
 
-This means the version lives in the release tag, not in a commit you make by
-hand — `package.json`'s version is just a record of the last thing published,
-kept in sync automatically. Don't hand-edit it; the next release overwrites
-whatever is there.
+The version lives in the release tag, not in a commit you make by hand —
+`package.json`'s version is a record of the last thing published, kept in sync
+automatically. Don't hand-edit it; the next release overwrites it.
 
-The workflow pushes that bump commit straight to the default branch using the
-default `GITHUB_TOKEN`. If branch protection on this repo ever requires PRs
-or status checks before a push lands, that push will fail — either add an
-exception for `github-actions[bot]`, or drop this step and go back to bumping
-`package.json` by hand before tagging.
+The workflow pushes that bump commit to the default branch with the default
+`GITHUB_TOKEN`. If branch protection ever requires PRs or status checks before
+a push lands, that push fails — either add an exception for
+`github-actions[bot]`, or drop the step and bump `package.json` by hand before
+tagging.
 
-Consuming projects need one line in `.npmrc`:
+### Publishing needs no token
 
-```
-@martinca:registry=https://npm.pkg.github.com
-```
+The workflow authenticates with npm through OIDC ("trusted publishing"): npm
+mints a short-lived, workflow-scoped credential from the `id-token: write`
+permission. There is no npm token to store, rotate or leak, and npm attaches a
+provenance attestation automatically — no `--provenance` flag.
 
-and a token with `read:packages` in CI. For local dev, `gh auth token` works:
+Two things about the setup are easy to get wrong, and both fail confusingly:
+
+**A trusted publisher cannot be attached to a package that does not exist
+yet.** Unlike PyPI, npm has no pre-registration, so the very first publish must
+use a token. Do it once from your machine and never again:
 
 ```sh
-echo "//npm.pkg.github.com/:_authToken=$(gh auth token)" >> ~/.npmrc
+npm login
+npm publish --access public
 ```
 
-**Naming the CI secret:** GitHub Actions rejects any repository/organization
-secret whose name starts with `GITHUB_` — that prefix is reserved for its own
-automatic variables. Pick something else for the secret itself; name it after
-what it's actually for rather than something generic like `GH_PACKAGES_TOKEN`
-that invites collisions with other packages tokens a repo might need —
-`FRONTEND_KIT_PACKAGES_TOKEN` is explicit and won't clash. The env var name
-you reference in `.npmrc` (`GITHUB_PACKAGES_TOKEN` or whatever you called it)
-is unaffected by this — that restriction only applies to the secret's name in
-Actions settings, map one to the other in the workflow:
+That one publishes whatever version `package.json` currently holds — it is the
+single case where the version does not come from a release tag. Everything
+after it goes back to the release flow above.
 
-```yaml
-- name: Build
-  run: GITHUB_PACKAGES_TOKEN=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }} pnpm install --frozen-lockfile
+Then, at npmjs.com → the package → Settings → Trusted Publisher → GitHub
+Actions, fill in: organization or user `MartinCa`, repository `frontend-kit`,
+workflow filename `publish.yml`, environment blank. Every later release goes
+through the workflow with no credential.
+
+Order matters for the last step. "Require two-factor authentication and
+disallow tokens" closes the door the bootstrap publish came through — but do it
+only **after** a release has actually published through the workflow, not
+straight after configuring the trusted publisher. There is no dry run for OIDC:
+the first real release is the test, and until it passes, the token route is the
+only way back in.
+
+So the sequence is: bootstrap publish by hand → configure the trusted publisher
+→ cut a normal release and watch it publish with no credential → then lock
+tokens out.
+
+If that first workflow release fails at the publish step, the bump commit has
+already landed on the default branch. That is recoverable: re-running the
+workflow finds `package.json` already at the target version, makes no second
+commit, and retries the publish.
+
+**`actions/setup-node` must not be given `registry-url`.** With `registry-url`
+set and no `NODE_AUTH_TOKEN`, it writes an empty `_authToken=` line into
+`.npmrc`; npm reads that, concludes authentication is already configured, skips
+the OIDC exchange entirely and fails with `ENEEDAUTH` or a 404
+([actions/setup-node#1551](https://github.com/actions/setup-node/issues/1551)).
+registry.npmjs.org is npm's default anyway, so the fix is to omit the option
+rather than to strip the line back out afterwards.
+
+`publishConfig.access` is set to `public` in `package.json` rather than left to
+the CLI default. npm's own docs disagree with each other about whether a new
+scoped package defaults to public or restricted; stating it removes the
+question, and a scoped package published restricted by accident needs a paid
+plan.
+
+Trusted publishing needs npm CLI 11.5.1+ and Node 22.14+. The workflow pins
+Node 24, which satisfies both, and checks the npm version explicitly so a
+runner image change surfaces as a clear failure rather than an auth error.
+
+### Consuming projects need nothing
+
+No `.npmrc`, no token, no CI secret:
+
+```sh
+pnpm add -D @martinrun/frontend-config
 ```
 
-If the project builds through Docker (multi-stage build installing the
-frontend), pass the same secret into BuildKit rather than an `ARG` — an `ARG`
-bakes the token into an image layer:
+Renovate reads it like any other public package, with no host rules.
 
-```dockerfile
-RUN --mount=type=secret,id=github_packages_token \
-    GITHUB_PACKAGES_TOKEN="$(cat /run/secrets/github_packages_token)" pnpm install --frozen-lockfile
-```
+### Migrating a project off GitHub Packages
 
-```yaml
-- uses: docker/build-push-action@...
-  with:
-    secrets: |
-      github_packages_token=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}
-```
+For a project that consumed the old `@martinrun/frontend-config`, the migration
+is all deletions:
 
-Note PRs from forks never see this secret (GitHub withholds all secrets from
-fork-triggered workflow runs) — a Docker build step will fail there. That's
-expected for a private-package dependency, not a bug to chase.
-
-**If that friction is not worth it** — and for four hobby projects it may not be —
-drop the npm package entirely and distribute the three config files through the
-shadcn registry as well, as `registry:file` items targeting `eslint.config.js`,
-`prettier.config.js`, and `tsconfig.base.json`. You lose Renovate automation and
-gain zero auth setup. Decide once; do not do both.
+1. `pnpm remove @martinrun/frontend-config && pnpm add -D @martinrun/frontend-config`
+2. Update the three config files that import it — `eslint.config.js`,
+   `prettier.config.js`, `tsconfig.json`.
+3. Delete the project `.npmrc` (or just the `@martinca:` line, if the file has
+   other scopes in it).
+4. In a Dockerfile, drop the `--mount=type=secret` and the npmrc-writing
+   preamble; `pnpm install --frozen-lockfile` is enough again.
+5. Drop the `secrets:` block from the `docker/build-push-action` step, and
+   delete the `FRONTEND_KIT_PACKAGES_TOKEN` Actions secret.
+6. Remove any Renovate `hostRules` entry for `npm.pkg.github.com`.
 
 ---
 
@@ -193,6 +240,33 @@ Renovate cannot see shadcn components — they are your source files, not
 dependencies. It will keep the primitives underneath them current, which is
 where the actual security surface is.
 
+### Renovate and the config package
+
+Nothing to configure. `@martinrun/frontend-config` is public on npmjs, so
+Renovate resolves it like any other dependency — no host rules, no secret, no
+token.
+
+This is the part that used to need the most setup, and it is worth recording
+why, because the failure was silent. On GitHub Packages the package needed a
+credential Renovate did not have: its automatic host rules for
+`*.pkg.github.com` use the platform token, which only reaches repositories
+Renovate is installed on, and the package lived in a different repo. Granting
+the consuming repository Read under the package's "Manage Actions access" did
+not help either — that setting is scoped to GitHub Actions workflows, and the
+Mend-hosted Renovate app authenticates as a GitHub App installation instead.
+The only symptom was a line on the Dependency Dashboard:
+
+```
+Failed to look up npm package @martinca/frontend-config: no-result
+```
+
+No PR, no error, just a dependency that quietly stopped being updated. If a
+package ever appears in the dashboard's detected list with no `→ Updates:`
+beside it, that is what to look for.
+
+`renovate-frontend.json` automerges patch and minor bumps of the config
+package, so updates land without a review step.
+
 ---
 
 ## Part 6 — Start a project
@@ -204,11 +278,12 @@ pnpm dlx shadcn@latest add \
   MartinCa/frontend-kit/conventions \
   MartinCa/frontend-kit/api-client \
   MartinCa/frontend-kit/query-setup \
+  MartinCa/frontend-kit/theme \
   MartinCa/frontend-kit/theme-provider
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
-pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss
 ```
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
@@ -226,27 +301,47 @@ dependency gets added — the migration agent prompt in
 
 Three files in the project reference the shared config:
 
+`theme` is in that list even though `init --preset` already writes the standard
+tokens: the status tokens (`--status-ok`, `--status-warn`, `--status-error`,
+`--status-unknown`) are this kit's own and are in no preset. `theme.css` also
+carries the `@theme inline` block that registers them with Tailwind — without
+it `bg-status-ok` is not a utility that exists, and DESIGN.md section 5 leaves
+no legal way to express a status colour. Import it after the Tailwind entry
+point.
+
 **eslint.config.js**
 ```js
-import config from "@martinca/frontend-config/eslint";
+import config from "@martinrun/frontend-config/eslint";
 export default config();
 ```
 
 **prettier.config.js**
 ```js
-export { default } from "@martinca/frontend-config/prettier";
+export { default } from "@martinrun/frontend-config/prettier";
 ```
 
 **tsconfig.json**
 ```json
 {
-  "extends": "@martinca/frontend-config/tsconfig",
+  "extends": "@martinrun/frontend-config/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src"]
 }
+```
+
+**package.json scripts** — DESIGN.md section 1 says lint is enforced in CI, and
+that is only true with `--max-warnings 0`. Some rules in the shared config are
+deliberately warnings (`no-console`, `react-refresh/only-export-components`)
+because they are noisy mid-edit, and `eslint` exits 0 on warnings, so without
+the flag CI stays green while they accumulate:
+
+```jsonc
+"lint": "eslint .",
+"lint:ci": "eslint . --max-warnings 0",
+"format:check": "prettier --check ."
 ```
 
 **vite.config.ts** — the `/api` proxy that makes the backend interchangeable:
@@ -293,7 +388,14 @@ React ever mounts:
 ```html
 <script>
   (function () {
-    var stored = localStorage.getItem("theme");
+    var stored = null;
+    // Same reason ThemeProvider guards it: localStorage throws outright in
+    // Safari private browsing and in a sandboxed iframe. An uncaught throw here
+    // is not fatal, but it skips the class assignment on the line below and
+    // brings back the flash this script exists to prevent.
+    try {
+      stored = localStorage.getItem("theme");
+    } catch (e) {}
     var dark = stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", dark);
   })();
@@ -405,20 +507,19 @@ command in the setup script. It works fine when Claude runs it mid-session.
 
 ### The private-repo question, again
 
-Git is authenticated through a proxy so credentials stay outside the sandbox, but
-that covers git, not an authenticated npm install from GitHub Packages or a
-private shadcn registry read. Both need a token in the environment variables panel.
+Git is authenticated through a proxy so credentials stay outside the sandbox,
+but that covers git, not a shadcn registry read from a private repo.
 
-Two ways out, in order of preference:
+This used to be two problems; the config package is no longer one of them —
+it is public on npmjs and needs no credential anywhere (Part 2). What is left
+is the registry read, and `frontend-kit` being public settles it: shadcn reads
+the files anonymously and no `GH_TOKEN` is needed in the environment variables
+panel at all.
 
-1. **Make `frontend-kit` public.** Publish the config to npm, or skip the package
-   and ship the config files through the registry as `registry:file` items.
-   Nothing in this repo is secret — it is lint rules and a style guide.
-2. Keep it private, set `GH_TOKEN` (fine-grained, `Contents: Read-only`, scoped to
-   the repo) in the environment variables. shadcn only ever sends it to
-   `api.github.com`. Accept a long-lived token sitting in a settings field.
-
-For hobby projects, option 1 is the right trade.
+If you ever make the repo private again, that is when you need a fine-grained
+PAT (`Contents: Read-only`, scoped to the repo) in the environment variables,
+and you accept a long-lived token sitting in a settings field. For hobby
+projects, public remains the right trade.
 
 ### Summary
 
@@ -426,7 +527,7 @@ For hobby projects, option 1 is the right trade.
 |---|---|---|
 | Conventions skill | plugin marketplace | vendored `.claude/skills/` — required |
 | `DESIGN.md` / `AGENTS.md` | registry | already in the clone |
-| Shared lint config | npm package | fine if the package is public |
+| Shared lint config | npm package | works, it is public on npmjs |
 | `pnpm install` | works | works on Trusted |
 | shadcn CLI | works | try Trusted first, Full if it fails |
 | Component `--diff` updates | yes | avoid; do these locally |
@@ -436,8 +537,11 @@ For hobby projects, option 1 is the right trade.
 ## Part 9 — Authoring new registry items
 
 Two things that broke on the first attempt, found only by actually running
-`shadcn add` against the real registry — `validate.yml`'s checks (`registry.json`
-parses, every file path exists) don't catch either one.
+`shadcn add` against the real registry. `validate.yml` now catches the first one
+(`scripts/validate-manifests.mjs` rejects a self-referential
+`registryDependencies` entry, and rejects an item whose `.ts`/`.tsx` files
+import a `@/` path the item does not itself ship). The second is still not
+mechanically checkable.
 
 **A `registryDependencies` entry cannot point back into this same registry.**
 A bare name in `registryDependencies` (e.g. `["theme-provider"]`) always
@@ -452,7 +556,9 @@ The item at https://ui.shadcn.com/r/styles/base-nova/theme-provider.json was not
 
 Fix: don't use `registryDependencies` for same-registry references at all —
 list the dependency's file(s) directly in the dependent item's own `files`
-array instead (see `theme-toggle`, which bundles `theme-provider.tsx`).
+array instead (see `theme-toggle`, which bundles `theme-provider.tsx`, and
+`query-setup`, which bundles `api.ts` because `query.ts` imports `ApiError`
+from it).
 `registryDependencies` is fine, and the right tool, for referencing an item
 from the *default* registry (`button`, `dialog`, etc.) — those resolve
 correctly.

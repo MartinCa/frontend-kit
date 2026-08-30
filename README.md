@@ -5,7 +5,7 @@ shadcn/ui + Tailwind.
 
 One repo, three distribution channels:
 
-- **npm package** `@martinca/frontend-config` — ESLint, tsconfig, Prettier.
+- **npm package** `@martinrun/frontend-config` — ESLint, tsconfig, Prettier.
   Updated by Renovate.
 - **shadcn registry** — `DESIGN.md`, the API client, query defaults, theme
   tokens. Updated deliberately with `shadcn add --overwrite`.
@@ -45,7 +45,17 @@ claude plugin install frontend-conventions@martinca
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme-provider
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/agent-skill
 ```
+
+`theme-provider` needs wiring, not just installing — wrap the app in
+`<ThemeProvider>` (SETUP.md Part 6) or dark mode never activates and nothing
+errors to say why. `agent-skill` vendors the conventions skill into
+`.claude/skills/` so Claude Code on web and mobile sees it; the marketplace
+install above only covers the local terminal. Full walkthrough in
+[SETUP.md](./SETUP.md).
 
 ## Changing a convention
 
