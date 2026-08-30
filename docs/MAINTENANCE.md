@@ -21,10 +21,15 @@ Pull the parts of the kit that are read from source, not from a package:
 
 ```sh
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions --overwrite
-pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client --overwrite
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup --overwrite
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme --overwrite
 git diff        # reconcile against project-specific edits, section 9 of DESIGN.md
 ```
+
+`query-setup` bundles `lib/api.ts` as well as `lib/query.ts` (`query.ts`
+imports `ApiError`, and a registry item cannot reference another item in the
+same registry — SETUP.md Part 9), so it refreshes the API client too. Running
+`api-client --overwrite` separately is redundant, not wrong.
 
 If the project vendored the agent skill for cloud sessions (Part 8 of
 SETUP.md), refresh it the same way and commit:
@@ -94,3 +99,7 @@ across several repos, revisit making `frontend-kit` public instead (SETUP.md,
 - Two projects solving the same problem two different ways outside what
   DESIGN.md governs — that's a signal to add a new registry item or convention
   upstream, not to let it happen a third time.
+- `SKILL.md` changed in frontend-kit but `plugins/frontend-conventions/.claude-plugin/plugin.json`
+  still shows the same version — installed plugins have nothing to compare
+  against, so the update may not reach machines that already have it. Bump the
+  plugin version in the same PR as any skill change.

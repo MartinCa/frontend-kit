@@ -204,6 +204,7 @@ pnpm dlx shadcn@latest add \
   MartinCa/frontend-kit/conventions \
   MartinCa/frontend-kit/api-client \
   MartinCa/frontend-kit/query-setup \
+  MartinCa/frontend-kit/theme \
   MartinCa/frontend-kit/theme-provider
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
@@ -226,6 +227,14 @@ dependency gets added — the migration agent prompt in
 
 Three files in the project reference the shared config:
 
+`theme` is in that list even though `init --preset` already writes the standard
+tokens: the status tokens (`--status-ok`, `--status-warn`, `--status-error`,
+`--status-unknown`) are this kit's own and are in no preset. `theme.css` also
+carries the `@theme inline` block that registers them with Tailwind — without
+it `bg-status-ok` is not a utility that exists, and DESIGN.md section 5 leaves
+no legal way to express a status colour. Import it after the Tailwind entry
+point.
+
 **eslint.config.js**
 ```js
 import config from "@martinca/frontend-config/eslint";
@@ -247,6 +256,18 @@ export { default } from "@martinca/frontend-config/prettier";
   },
   "include": ["src"]
 }
+```
+
+**package.json scripts** — DESIGN.md section 1 says lint is enforced in CI, and
+that is only true with `--max-warnings 0`. Some rules in the shared config are
+deliberately warnings (`no-console`, `react-refresh/only-export-components`)
+because they are noisy mid-edit, and `eslint` exits 0 on warnings, so without
+the flag CI stays green while they accumulate:
+
+```jsonc
+"lint": "eslint .",
+"lint:ci": "eslint . --max-warnings 0",
+"format:check": "prettier --check ."
 ```
 
 **vite.config.ts** — the `/api` proxy that makes the backend interchangeable:
@@ -293,7 +314,14 @@ React ever mounts:
 ```html
 <script>
   (function () {
-    var stored = localStorage.getItem("theme");
+    var stored = null;
+    // Same reason ThemeProvider guards it: localStorage throws outright in
+    // Safari private browsing and in a sandboxed iframe. An uncaught throw here
+    // is not fatal, but it skips the class assignment on the line below and
+    // brings back the flash this script exists to prevent.
+    try {
+      stored = localStorage.getItem("theme");
+    } catch (e) {}
     var dark = stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", dark);
   })();
@@ -436,8 +464,11 @@ For hobby projects, option 1 is the right trade.
 ## Part 9 — Authoring new registry items
 
 Two things that broke on the first attempt, found only by actually running
-`shadcn add` against the real registry — `validate.yml`'s checks (`registry.json`
-parses, every file path exists) don't catch either one.
+`shadcn add` against the real registry. `validate.yml` now catches the first one
+(`scripts/validate-manifests.mjs` rejects a self-referential
+`registryDependencies` entry, and rejects an item whose `.ts`/`.tsx` files
+import a `@/` path the item does not itself ship). The second is still not
+mechanically checkable.
 
 **A `registryDependencies` entry cannot point back into this same registry.**
 A bare name in `registryDependencies` (e.g. `["theme-provider"]`) always
@@ -452,7 +483,9 @@ The item at https://ui.shadcn.com/r/styles/base-nova/theme-provider.json was not
 
 Fix: don't use `registryDependencies` for same-registry references at all —
 list the dependency's file(s) directly in the dependent item's own `files`
-array instead (see `theme-toggle`, which bundles `theme-provider.tsx`).
+array instead (see `theme-toggle`, which bundles `theme-provider.tsx`, and
+`query-setup`, which bundles `api.ts` because `query.ts` imports `ApiError`
+from it).
 `registryDependencies` is fine, and the right tool, for referencing an item
 from the *default* registry (`button`, `dialog`, etc.) — those resolve
 correctly.
