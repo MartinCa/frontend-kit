@@ -11,7 +11,7 @@ Run these in order, stopping to report if any step fails:
    recorded in the frontend-kit README)
 2. `pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions`
 3. `pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client MartinCa/frontend-kit/query-setup MartinCa/frontend-kit/theme MartinCa/frontend-kit/theme-provider`
-4. `pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss typescript`
+4. `pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss typescript`
 5. `pnpm add @tanstack/react-query @tanstack/react-router zustand react-hook-form zod date-fns lucide-react`
 6. `pnpm dlx skills add shadcn/ui`
 

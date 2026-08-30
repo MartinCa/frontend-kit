@@ -5,7 +5,7 @@
 //
 // Usage in a project's eslint.config.js:
 //
-//   import config from "@martinca/frontend-config/eslint";
+//   import config from "@martinrun/frontend-config/eslint";
 //   export default config();
 //
 // To relax a rule for one project, spread and override:

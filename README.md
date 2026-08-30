@@ -5,7 +5,7 @@ shadcn/ui + Tailwind.
 
 One repo, three distribution channels:
 
-- **npm package** `@martinca/frontend-config` — ESLint, tsconfig, Prettier.
+- **npm package** `@martinrun/frontend-config` — ESLint, tsconfig, Prettier.
   Updated by Renovate.
 - **shadcn registry** — `DESIGN.md`, the API client, query defaults, theme
   tokens. Updated deliberately with `shadcn add --overwrite`.

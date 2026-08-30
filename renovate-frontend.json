@@ -4,7 +4,7 @@
   "packageRules": [
     {
       "description": "Config package: automerge patch and minor, it only ever tightens lint rules",
-      "matchPackageNames": ["@martinca/frontend-config"],
+      "matchPackageNames": ["@martinrun/frontend-config"],
       "automerge": true,
       "matchUpdateTypes": ["patch", "minor"]
     },

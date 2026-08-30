@@ -9,7 +9,7 @@ channels because the three kinds of rule need three kinds of enforcement:
 
 | Layer | Channel | Updated by |
 |---|---|---|
-| Lint, tsconfig, Prettier | npm package `@martinca/frontend-config` on GitHub Packages | Renovate PR |
+| Lint, tsconfig, Prettier | npm package `@martinrun/frontend-config`, public on npmjs | Renovate PR |
 | DESIGN.md, shared code, tokens | shadcn registry (this repo, read by the CLI) | `shadcn add --overwrite`, deliberately |
 | Agent behaviour | Claude Code plugin marketplace (this repo) | automatically, one copy exists |
 
@@ -42,133 +42,120 @@ The token is only ever sent to `api.github.com`.
 If you would rather not deal with tokens on every machine, make this repo public.
 There is nothing secret in it — it is lint rules and a style guide.
 
-That settles the registry reads described above, and only those. The config
-package on GitHub Packages needs a token whether or not it is public — see
-"Making the repo public does not remove the token" in Part 5 before assuming
-otherwise.
+That settles the registry reads described above. The config package is a
+separate channel and needs no token either — it is public on npmjs, not on
+GitHub Packages (Part 2 explains why).
 
 ---
 
 ## Part 2 — Publish the config package
 
-The package is scoped `@martinca` and publishes to GitHub Packages, which is
-free for private packages and needs no npmjs account.
+The package is `@martinrun/frontend-config`, published public to
+registry.npmjs.org. The scope comes from the npm username `martinrun`; it is a
+namespace, not an organization, and does not need to match the GitHub owner.
+
+Public and on npmjs is a deliberate choice over GitHub Packages. GitHub's npm
+registry authenticates *every* read, public packages included — there is no
+anonymous pull — so a private-registry package drags a token into every
+consumer: a `.npmrc`, a CI secret, a BuildKit secret for Docker builds, a
+Renovate host rule, and a PAT expiry to remember. On npmjs a public package
+needs none of that. Nothing in this repo is secret; it is lint rules and a
+style guide.
+
+### Releasing
 
 ```sh
-gh release create v0.1.0 --generate-notes
+gh release create v0.2.0 --generate-notes
 ```
 
-That's the only step — no local `npm version` needed. The workflow fires on
-a published GitHub Release, reads the version from the tag (`v0.1.0` →
-`0.1.0`), bumps `package.json` to match, commits that bump straight to the
-default branch, and publishes. Marking a release as a pre-release skips
-publishing. For a one-off publish with no release at all, run the workflow
-manually (`workflow_dispatch`) and give it a version in the input field.
+That's the only step. The workflow fires on a published GitHub Release, reads
+the version from the tag (`v0.2.0` → `0.2.0`), bumps `package.json` to match,
+commits that bump to the default branch, and publishes. Marking a release as a
+pre-release skips publishing. For a one-off publish with no release, run the
+workflow manually (`workflow_dispatch`) and give it a version in the input.
 
-This means the version lives in the release tag, not in a commit you make by
-hand — `package.json`'s version is just a record of the last thing published,
-kept in sync automatically. Don't hand-edit it; the next release overwrites
-whatever is there.
+The version lives in the release tag, not in a commit you make by hand —
+`package.json`'s version is a record of the last thing published, kept in sync
+automatically. Don't hand-edit it; the next release overwrites it.
 
-The workflow pushes that bump commit straight to the default branch using the
-default `GITHUB_TOKEN`. If branch protection on this repo ever requires PRs
-or status checks before a push lands, that push will fail — either add an
-exception for `github-actions[bot]`, or drop this step and go back to bumping
-`package.json` by hand before tagging.
+The workflow pushes that bump commit to the default branch with the default
+`GITHUB_TOKEN`. If branch protection ever requires PRs or status checks before
+a push lands, that push fails — either add an exception for
+`github-actions[bot]`, or drop the step and bump `package.json` by hand before
+tagging.
 
-Consuming projects need one line in the project's committed `.npmrc` — the
-scope-to-registry mapping, and nothing else:
+### Publishing needs no token
 
-```
-@martinca:registry=https://npm.pkg.github.com
-```
+The workflow authenticates with npm through OIDC ("trusted publishing"): npm
+mints a short-lived, workflow-scoped credential from the `id-token: write`
+permission. There is no npm token to store, rotate or leak, and npm attaches a
+provenance attestation automatically — no `--provenance` flag.
 
-**The token does not go in that file.** Since pnpm 11, an `_authToken` line in
-a project-level `.npmrc` whose value is an environment variable is ignored, with
-a warning rather than an error:
+Two things about the setup are easy to get wrong, and both fail confusingly:
 
-```
-[WARN] Ignored project-level auth setting "//npm.pkg.github.com/:_authToken" in
-"/frontend/.npmrc": environment variables are not expanded in registry
-credentials that come from a project .npmrc, because that file is committed to
-the repository and could leak the secret to an attacker-controlled registry.
-```
-
-The install then continues without an auth header and fails later with
-`ERR_PNPM_FETCH_401 ... No authorization header was set for the request`, which
-reads like a missing token rather than an ignored one. pnpm still expands the
-same `${VAR}` in a *user-level* config, which is the fix everywhere below. (A
-hardcoded literal token in a project `.npmrc` is still honoured — that is how
-Renovate's own lockfile updates keep working — but committing one is the thing
-the change exists to prevent.)
-
-For local dev, `gh auth token` writes a literal into the user-level file:
+**A trusted publisher cannot be attached to a package that does not exist
+yet.** Unlike PyPI, npm has no pre-registration, so the very first publish must
+use a token. Do it once from your machine and never again:
 
 ```sh
-echo "//npm.pkg.github.com/:_authToken=$(gh auth token)" >> ~/.npmrc
+npm login
+npm publish --access public
 ```
 
-**Naming the CI secret:** GitHub Actions rejects any repository/organization
-secret whose name starts with `GITHUB_` — that prefix is reserved for its own
-automatic variables. Pick something else for the secret itself; name it after
-what it's actually for rather than something generic like `GH_PACKAGES_TOKEN`
-that invites collisions with other packages tokens a repo might need —
-`FRONTEND_KIT_PACKAGES_TOKEN` is explicit and won't clash. The env var name
-you reference in `.npmrc` (`GITHUB_PACKAGES_TOKEN` or whatever you called it)
-is unaffected by this — that restriction only applies to the secret's name in
-Actions settings, map one to the other in the workflow:
+That one publishes whatever version `package.json` currently holds — it is the
+single case where the version does not come from a release tag. Everything
+after it goes back to the release flow above.
 
-```yaml
-- name: Authenticate to GitHub Packages
-  run: echo "//npm.pkg.github.com/:_authToken=$GITHUB_PACKAGES_TOKEN" >> ~/.npmrc
-  env:
-    GITHUB_PACKAGES_TOKEN: ${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}
+Then, at npmjs.com → the package → Settings → Trusted Publisher → GitHub
+Actions, fill in: organization or user `MartinCa`, repository `frontend-kit`,
+workflow filename `publish.yml`, environment blank. Every later release goes
+through the workflow with no credential. Setting "Require two-factor
+authentication and disallow tokens" on the package afterwards closes the door
+the bootstrap publish came through.
 
-- name: Build
-  run: pnpm install --frozen-lockfile
+**`actions/setup-node` must not be given `registry-url`.** With `registry-url`
+set and no `NODE_AUTH_TOKEN`, it writes an empty `_authToken=` line into
+`.npmrc`; npm reads that, concludes authentication is already configured, skips
+the OIDC exchange entirely and fails with `ENEEDAUTH` or a 404
+([actions/setup-node#1551](https://github.com/actions/setup-node/issues/1551)).
+registry.npmjs.org is npm's default anyway, so the fix is to omit the option
+rather than to strip the line back out afterwards.
+
+`publishConfig.access` is set to `public` in `package.json` rather than left to
+the CLI default. npm's own docs disagree with each other about whether a new
+scoped package defaults to public or restricted; stating it removes the
+question, and a scoped package published restricted by accident needs a paid
+plan.
+
+Trusted publishing needs npm CLI 11.5.1+ and Node 22.14+. The workflow pins
+Node 24, which satisfies both, and checks the npm version explicitly so a
+runner image change surfaces as a clear failure rather than an auth error.
+
+### Consuming projects need nothing
+
+No `.npmrc`, no token, no CI secret:
+
+```sh
+pnpm add -D @martinrun/frontend-config
 ```
 
-`~/.npmrc` on the runner, not the repo's `.npmrc` — see the pnpm 11 note above.
-The runner is destroyed after the job, and `$GITHUB_PACKAGES_TOKEN` is a
-registered secret, so Actions masks it if it ever reaches the log.
+Renovate reads it like any other public package, with no host rules.
 
-If the project builds through Docker (multi-stage build installing the
-frontend), pass the same secret into BuildKit rather than an `ARG` — an `ARG`
-bakes the token into an image layer:
+### Migrating a project off GitHub Packages
 
-```dockerfile
-# The auth line goes in a user-level npmrc, written and removed inside a single
-# RUN so it never lands in a layer. Exporting NPM_CONFIG_USERCONFIG rather than
-# writing ~/.npmrc keeps this working whatever user the base image runs as.
-RUN --mount=type=secret,id=github_packages_token \
-    export NPM_CONFIG_USERCONFIG=/tmp/npmrc && \
-    echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_packages_token)" \
-      > "$NPM_CONFIG_USERCONFIG" && \
-    pnpm install --frozen-lockfile; \
-    status=$?; rm -f "$NPM_CONFIG_USERCONFIG"; exit "$status"
-```
+For a project that consumed the old `@martinrun/frontend-config`, the migration
+is all deletions:
 
-Passing the secret as an env var on the `pnpm install` line itself — the
-obvious shape, and what this file recommended before pnpm 11 — silently does
-nothing, because the only thing that would have read that variable is the
-project `.npmrc` line pnpm now ignores.
-
-```yaml
-- uses: docker/build-push-action@...
-  with:
-    secrets: |
-      github_packages_token=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}
-```
-
-Note PRs from forks never see this secret (GitHub withholds all secrets from
-fork-triggered workflow runs) — a Docker build step will fail there. That's
-expected for a private-package dependency, not a bug to chase.
-
-**If that friction is not worth it** — and for four hobby projects it may not be —
-drop the npm package entirely and distribute the three config files through the
-shadcn registry as well, as `registry:file` items targeting `eslint.config.js`,
-`prettier.config.js`, and `tsconfig.base.json`. You lose Renovate automation and
-gain zero auth setup. Decide once; do not do both.
+1. `pnpm remove @martinrun/frontend-config && pnpm add -D @martinrun/frontend-config`
+2. Update the three config files that import it — `eslint.config.js`,
+   `prettier.config.js`, `tsconfig.json`.
+3. Delete the project `.npmrc` (or just the `@martinca:` line, if the file has
+   other scopes in it).
+4. In a Dockerfile, drop the `--mount=type=secret` and the npmrc-writing
+   preamble; `pnpm install --frozen-lockfile` is enough again.
+5. Drop the `secrets:` block from the `docker/build-push-action` step, and
+   delete the `FRONTEND_KIT_PACKAGES_TOKEN` Actions secret.
+6. Remove any Renovate `hostRules` entry for `npm.pkg.github.com`.
 
 ---
 
@@ -239,102 +226,32 @@ Renovate cannot see shadcn components — they are your source files, not
 dependencies. It will keep the primitives underneath them current, which is
 where the actual security surface is.
 
-### Renovate and the private package
+### Renovate and the config package
 
-A private package on GitHub Packages does not stop Renovate from updating it,
-and in the common case there is nothing to configure: Renovate automatically
-provisions host rules for `*.pkg.github.com` using its own platform token. That
-covers version lookups *and* the `pnpm install` it runs to refresh
-`pnpm-lock.yaml` — Renovate writes a literal token into the npmrc it generates
-at that moment, which is not what pnpm 11 rejects (it only refuses to expand
-environment variables in a *committed* project `.npmrc`).
+Nothing to configure. `@martinrun/frontend-config` is public on npmjs, so
+Renovate resolves it like any other dependency — no host rules, no secret, no
+token.
 
-The catch is reach, not mechanism. That platform token only sees repositories
-Renovate is installed on, and `@martinca/frontend-config` lives in a different
-repo from the project consuming it. Two ways to close the gap, in order of
-preference:
+This is the part that used to need the most setup, and it is worth recording
+why, because the failure was silent. On GitHub Packages the package needed a
+credential Renovate did not have: its automatic host rules for
+`*.pkg.github.com` use the platform token, which only reaches repositories
+Renovate is installed on, and the package lived in a different repo. Granting
+the consuming repository Read under the package's "Manage Actions access" did
+not help either — that setting is scoped to GitHub Actions workflows, and the
+Mend-hosted Renovate app authenticates as a GitHub App installation instead.
+The only symptom was a line on the Dependency Dashboard:
 
-1. **Grant the consuming repo read access to the package.** In the package's
-   settings, under "Manage Actions access", add the repository. This lets that
-   repo's own `GITHUB_TOKEN` read the package, so its CI and Docker build need
-   no PAT secret at all and the whole Part 2 secret dance goes away.
+```
+Failed to look up npm package @martinca/frontend-config: no-result
+```
 
-   "Manage Actions access" is its own list and works alongside "Inherit access
-   from source repository" — leave the inherit box checked. GitHub's docs say
-   inherited permissions must be removed "to access the package's granular
-   permissions settings", but that is about the member list further down the
-   page, not this one. Nothing needs detaching, and `publish.yml` keeps working.
+No PR, no error, just a dependency that quietly stopped being updated. If a
+package ever appears in the dashboard's detected list with no `→ Updates:`
+beside it, that is what to look for.
 
-   This does **not** cover Renovate. The setting is scoped to GitHub Actions
-   workflows in the granted repository; the Mend-hosted Renovate app
-   authenticates as a GitHub App installation, which is a different principal.
-   Confirmed the hard way — with the repository granted Read, Renovate still
-   reported `Failed to look up npm package @martinca/frontend-config:
-   no-result` on its Dependency Dashboard. Renovate needs option 2.
-2. **Give Renovate its own token.** A classic PAT with `read:packages`
-   (fine-grained tokens are not the documented path for the npm registry).
-
-   Do not use the `encrypted` config block for this. Mend disabled encrypted
-   secrets in config files for its hosted apps — secrets now live in the web
-   UI. At [developer.mend.io](https://developer.mend.io), open the settings
-   for the account or the repository (admin rights required), go to
-   **Credentials → ADD SECRET**, and paste the PAT as **plaintext** — the
-   portal encrypts it. A secret added at account level is inherited by every
-   repository under it, so this is done once, not per project.
-
-   Then either add the host rule in the same portal (**Credentials → Host
-   Rules**), which needs no repository config at all, or reference the secret
-   from a repo's own `renovate.json`:
-
-   ```json
-   {
-     "hostRules": [
-       {
-         "matchHost": "https://npm.pkg.github.com/",
-         "hostType": "npm",
-         "token": "{{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}"
-       }
-     ]
-   }
-   ```
-
-   Keep the trailing slash on `matchHost`. To override Renovate's automatic
-   rule your rule has to be at least as specific as the one it generates.
-
-   Put this in each consuming repo, or use the portal's Host Rules — **not**
-   in `renovate-frontend.json`. Renovate's docs do not say whether a
-   `{{ secrets.* }}` reference resolves inside a shared preset that other
-   repositories extend, and a silently unresolved token here fails the same
-   quiet way the original lookup did.
-
-`renovate-frontend.json` already automerges patch and minor bumps of
-`@martinca/frontend-config`, so once it can read the package the config updates
-land without a review step. Before configuring anything, check whether it is
-already working — if Renovate has opened a PR for this package, its platform
-token can already read it and there is nothing to do.
-
-### Making the repo public does not remove the token
-
-Worth stating plainly, because it is the opposite of how every other registry
-behaves and it is easy to assume otherwise. GitHub's npm registry requires
-authentication for **every** read: "You need an access token to publish,
-install, and delete private, internal, and public packages." Unlike the
-Container registry, there is no anonymous pull. A public `frontend-kit` and a
-public `@martinca/frontend-config` still answer an unauthenticated request with
-`401 Unauthorized`.
-
-Public visibility does help the *other* channel — the shadcn registry reads in
-Part 1 are plain file reads and work anonymously against a public repo. It just
-does nothing for the package.
-
-So there are only two ways to genuinely stop passing a token around for the
-config package, both already described in Part 2:
-
-- Publish it to `registry.npmjs.org` instead, which does serve public packages
-  anonymously. Keep Renovate, lose GitHub Packages.
-- Drop the package and ship `eslint.config.js`, `prettier.config.js` and
-  `tsconfig.base.json` through the shadcn registry as `registry:file` items.
-  Zero auth, no Renovate automation for them.
+`renovate-frontend.json` automerges patch and minor bumps of the config
+package, so updates land without a review step.
 
 ---
 
@@ -352,7 +269,7 @@ pnpm dlx shadcn@latest add \
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
-pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss
 ```
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
@@ -380,19 +297,19 @@ point.
 
 **eslint.config.js**
 ```js
-import config from "@martinca/frontend-config/eslint";
+import config from "@martinrun/frontend-config/eslint";
 export default config();
 ```
 
 **prettier.config.js**
 ```js
-export { default } from "@martinca/frontend-config/prettier";
+export { default } from "@martinrun/frontend-config/prettier";
 ```
 
 **tsconfig.json**
 ```json
 {
-  "extends": "@martinca/frontend-config/tsconfig",
+  "extends": "@martinrun/frontend-config/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
@@ -576,20 +493,19 @@ command in the setup script. It works fine when Claude runs it mid-session.
 
 ### The private-repo question, again
 
-Git is authenticated through a proxy so credentials stay outside the sandbox, but
-that covers git, not an authenticated npm install from GitHub Packages or a
-private shadcn registry read. Both need a token in the environment variables panel.
+Git is authenticated through a proxy so credentials stay outside the sandbox,
+but that covers git, not a shadcn registry read from a private repo.
 
-Two ways out, in order of preference:
+This used to be two problems; the config package is no longer one of them —
+it is public on npmjs and needs no credential anywhere (Part 2). What is left
+is the registry read, and `frontend-kit` being public settles it: shadcn reads
+the files anonymously and no `GH_TOKEN` is needed in the environment variables
+panel at all.
 
-1. **Make `frontend-kit` public.** Publish the config to npm, or skip the package
-   and ship the config files through the registry as `registry:file` items.
-   Nothing in this repo is secret — it is lint rules and a style guide.
-2. Keep it private, set `GH_TOKEN` (fine-grained, `Contents: Read-only`, scoped to
-   the repo) in the environment variables. shadcn only ever sends it to
-   `api.github.com`. Accept a long-lived token sitting in a settings field.
-
-For hobby projects, option 1 is the right trade.
+If you ever make the repo private again, that is when you need a fine-grained
+PAT (`Contents: Read-only`, scoped to the repo) in the environment variables,
+and you accept a long-lived token sitting in a settings field. For hobby
+projects, public remains the right trade.
 
 ### Summary
 
@@ -597,7 +513,7 @@ For hobby projects, option 1 is the right trade.
 |---|---|---|
 | Conventions skill | plugin marketplace | vendored `.claude/skills/` — required |
 | `DESIGN.md` / `AGENTS.md` | registry | already in the clone |
-| Shared lint config | npm package | fine if the package is public |
+| Shared lint config | npm package | works, it is public on npmjs |
 | `pnpm install` | works | works on Trusted |
 | shadcn CLI | works | try Trusted first, Full if it fails |
 | Component `--diff` updates | yes | avoid; do these locally |

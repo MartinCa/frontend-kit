@@ -45,7 +45,7 @@ nobody follows.
 Wire the shared config (see SETUP.md Part 6 for the exact file contents):
 
 ```sh
-pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss
 ```
 
 No version typed in — let pnpm resolve current releases rather than writing
@@ -57,15 +57,13 @@ Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Run
 `pnpm lint` once and read the count, don't fix it yet — you need to know how
 big the gap is before deciding how to close it.
 
-If this project's CI installs dependencies (a lint/test workflow, or a Docker
-build that runs `pnpm install`), it needs a GitHub Packages token. The repo's
-committed `.npmrc` gets the scope-to-registry line only; the token goes in a
-user-level npmrc at build time, because pnpm 11 ignores an environment-variable
-credential in a project `.npmrc` and then fails with a 401 that looks like a
-missing token. See SETUP.md Part 2 for that, the secret naming gotcha (Actions
-won't allow a secret named `GITHUB_*`), and the BuildKit pattern for Docker
-builds — and Part 5 for the one package setting that lets the repo's own
-`GITHUB_TOKEN` do this instead of a PAT.
+The package is public on npmjs, so CI needs nothing extra — no `.npmrc`, no
+token, no BuildKit secret, whether the project installs in a workflow or in a
+Docker build.
+
+If this project previously consumed `@martinca/frontend-config` from GitHub
+Packages, delete that machinery rather than leaving it: see "Migrating a
+project off GitHub Packages" in SETUP.md Part 2 for the list.
 
 ## 3. Bring in shadcn/ui if it isn't there yet
 
@@ -184,7 +182,7 @@ it. In short:
    Fill in DESIGN.md section 9 by asking me what the app is, who uses it,
    the backend, and the pagination convention — do not guess these.
    List every item from step 1 you are not fixing now under "Deviations."
-3. Add @martinca/frontend-config as a dev dependency and wire eslint.config.js,
+3. Add @martinrun/frontend-config as a dev dependency and wire eslint.config.js,
    prettier.config.js, and tsconfig.json to extend it. Run the linter and
    report the violation count — do not silently disable rules to make it pass.
    Whenever you add a dependency in this migration, install it with the

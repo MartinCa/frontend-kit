@@ -10,8 +10,8 @@ on:
         required: false
 
 permissions:
-  contents: write
-  packages: write
+  contents: write # the version-bump commit pushed below
+  id-token: write # mints the short-lived OIDC credential npm publishes with
 
 jobs:
   publish:
@@ -29,12 +29,28 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # Deliberately no `registry-url`/`scope`: with registry-url set and no
+      # NODE_AUTH_TOKEN, setup-node writes an empty `_authToken=` line into
+      # .npmrc, npm decides auth is already configured, skips the OIDC exchange
+      # and fails with ENEEDAUTH or a 404 (actions/setup-node#1551).
+      # registry.npmjs.org is npm's default, so there is nothing to point at.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: "@martinca"
           package-manager-cache: false
+
+      # Trusted publishing needs npm 11.5.1+. Node 24 ships a new enough npm,
+      # but a runner image change would otherwise surface as an auth error
+      # rather than a version problem.
+      - name: npm is new enough for trusted publishing
+        run: |
+          required=11.5.1
+          actual="$(npm --version)"
+          if [ "$(printf '%s\n%s\n' "$required" "$actual" | sort -V | head -n1)" != "$required" ]; then
+            echo "npm $actual is older than $required; trusted publishing will not work." >&2
+            exit 1
+          fi
+          echo "npm $actual"
 
       # What gets published is the default branch, not the tagged commit, because
       # the bump commit below has to land on a branch. That is only correct when
@@ -86,11 +102,12 @@ jobs:
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
           GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
-      # No --provenance: it publishes an attestation to the public Sigstore
-      # log and is only supported against the public npm registry, not
-      # GitHub Packages. Nothing to add here if this package ever moves to
-      # registry.npmjs.org — just add the flag back and grant
-      # `id-token: write` above.
+      # No token: npm exchanges the Actions OIDC token for a short-lived,
+      # workflow-scoped credential. Provenance is attested automatically under
+      # trusted publishing, so --provenance is not needed either.
+      #
+      # This only works once a trusted publisher is configured for the package
+      # at npmjs.com, and that cannot be done before the package exists — the
+      # first version had to be published manually with a token. See Part 2 of
+      # SETUP.md.
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

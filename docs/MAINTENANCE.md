@@ -8,7 +8,7 @@ migration that looks more like [MIGRATION.md](./MIGRATION.md) than a diff.
 
 | What | How |
 |---|---|
-| ESLint/Prettier/tsconfig rule changes | Renovate opens a PR when `@martinca/frontend-config` bumps. Patch/minor auto-merges (see `renovate-frontend.json`). |
+| ESLint/Prettier/tsconfig rule changes | Renovate opens a PR when `@martinrun/frontend-config` bumps. Patch/minor auto-merges (see `renovate-frontend.json`). |
 | Agent behavior (the conventions skill) | Local terminal: automatic on the next `claude plugin update` / marketplace refresh. Nothing to do per project. |
 | Primitive libraries under shadcn components (Base UI/Radix) | Renovate groups and bumps them; review like any dependency PR. |
 
@@ -80,12 +80,10 @@ pnpm run api:types
 git diff src/lib/api-types.ts
 ```
 
-**Tokens.** If the project uses a `GH_TOKEN` for a private registry/package
-read (fine-grained PAT, `Contents: Read-only`), it has an expiry. Rotate it
-before it lapses — expiry shows up as `shadcn add`/`npm install` failing with
-an auth error, not a clear "token expired" message. If this becomes annoying
-across several repos, revisit making `frontend-kit` public instead (SETUP.md,
-"The private-repo question").
+**Tokens.** None. The config package is public on npmjs and `frontend-kit` is
+a public repo, so neither the package install nor a shadcn registry read needs
+a credential. If a `GH_TOKEN` is still set anywhere for this kit, it is left
+over from the GitHub Packages era and can go.
 
 ## Signals something has drifted
 
