@@ -18,7 +18,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # persist-credentials stays true (the default): this job pushes a
+      # version-bump commit later in the workflow using the checked-out
+      # git credentials, and no artifact upload step exposes the checkout
+      # directory, so the credential-persistence risk doesn't apply here.
+      - name: Checkout default branch # zizmor: ignore[artipacked] needed for the git push below; no artifacts are uploaded from this checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.repository.default_branch }}
 
@@ -27,12 +32,13 @@ jobs:
           node-version: 24
           registry-url: https://npm.pkg.github.com
           scope: "@martinca"
+          package-manager-cache: false
 
       - name: Resolve version to publish
         id: version
         run: |
-          version="${{ github.event.inputs.version }}"
-          tag="${{ github.event.release.tag_name }}"
+          version="${GITHUB_EVENT_INPUTS_VERSION}"
+          tag="${GITHUB_EVENT_RELEASE_TAG_NAME}"
           if [ -n "$tag" ]; then
             version="${tag#v}"
           fi
@@ -41,17 +47,23 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Bump package.json to match and commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm version "${STEPS_VERSION_OUTPUTS_VERSION}" --no-git-tag-version --allow-same-version
           if ! git diff --quiet -- package.json; then
             git add package.json
-            git commit -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
-            git push origin HEAD:${{ github.event.repository.default_branch }}
+            git commit -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
+            git push origin HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}
           fi
+        env:
+          STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
+          GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
       # No --provenance: it publishes an attestation to the public Sigstore
       # log and is only supported against the public npm registry, not
