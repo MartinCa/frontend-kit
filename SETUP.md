@@ -250,10 +250,25 @@ repo from the project consuming it. Two ways to close the gap, in order of
 preference:
 
 1. **Grant the consuming repo read access to the package.** In the package's
-   settings, under "Manage Actions access", add the repository. This is worth
-   doing regardless of Renovate: it also lets that repo's own `GITHUB_TOKEN`
-   read the package, so its CI and Docker build need no PAT secret at all and
-   the whole Part 2 secret dance goes away.
+   settings, under "Manage Actions access", add the repository. This lets that
+   repo's own `GITHUB_TOKEN` read the package, so its CI and Docker build need
+   no PAT secret at all and the whole Part 2 secret dance goes away.
+
+   One catch, and it is not a small one. A package published from a repository
+   is *linked* to it and inherits its permissions, and GitHub's own docs say
+   "to access the package's granular permissions settings, you must remove the
+   package's inherited permissions." So this route starts by detaching
+   `@martinca/frontend-config` from `frontend-kit`. Grant `frontend-kit` itself
+   Write in the same sitting — `publish.yml` authenticates with that repo's
+   `GITHUB_TOKEN`, and it is the inherited permission that makes that work
+   today. Cut a throwaway release afterwards to confirm publishing still works
+   before relying on it.
+
+   Whether this also covers Renovate is not documented. The setting is
+   described in terms of "GitHub Actions workflows in the linked repository";
+   a bot authenticating as a GitHub App installation is a different thing, and
+   the docs do not say either way. Treat Renovate as needing option 2 until you
+   have seen it open a PR for this package.
 2. **Give Renovate its own token**, if you would rather not manage per-package
    access. A classic PAT with `read:packages` (fine-grained tokens are not the
    documented path for the npm registry), stored encrypted:
@@ -275,7 +290,9 @@ preference:
 
 `renovate-frontend.json` already automerges patch and minor bumps of
 `@martinca/frontend-config`, so once it can read the package the config updates
-land without a review step.
+land without a review step. Before configuring anything, check whether it is
+already working — if Renovate has opened a PR for this package, its platform
+token can already read it and there is nothing to do.
 
 None of this is needed if `frontend-kit` is public — see "The private-repo
 question" in Part 8. For four hobby projects that remains the better trade, and
