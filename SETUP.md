@@ -430,3 +430,39 @@ For hobby projects, option 1 is the right trade.
 | `pnpm install` | works | works on Trusted |
 | shadcn CLI | works | try Trusted first, Full if it fails |
 | Component `--diff` updates | yes | avoid; do these locally |
+
+---
+
+## Part 9 — Authoring new registry items
+
+Two things that broke on the first attempt, found only by actually running
+`shadcn add` against the real registry — `validate.yml`'s checks (`registry.json`
+parses, every file path exists) don't catch either one.
+
+**A `registryDependencies` entry cannot point back into this same registry.**
+A bare name in `registryDependencies` (e.g. `["theme-provider"]`) always
+resolves against the default `ui.shadcn.com` registry, never "whichever
+registry this item itself came from." There is no implicit self-reference to
+`martinca`. An item that depends on another item defined in *this*
+`registry.json` will fail with something like:
+
+```
+The item at https://ui.shadcn.com/r/styles/base-nova/theme-provider.json was not found.
+```
+
+Fix: don't use `registryDependencies` for same-registry references at all —
+list the dependency's file(s) directly in the dependent item's own `files`
+array instead (see `theme-toggle`, which bundles `theme-provider.tsx`).
+`registryDependencies` is fine, and the right tool, for referencing an item
+from the *default* registry (`button`, `dialog`, etc.) — those resolve
+correctly.
+
+**There's no clean way to test a registry change against a branch before
+merging.** The `owner/repo/item` GitHub shorthand always reads from the
+repo's default branch; `item@branch`-style suffixes are parsed as a literal
+(and different) item name, not a ref, and fail with "not found" rather than
+a helpful error. In practice: verify a new/changed item by copying its files
+into a real consuming project by hand and testing that (as done for both
+bugs above), and treat the actual `shadcn add owner/repo/item` invocation
+against `main` as the final check once merged — not something you can fully
+pre-verify in the PR itself.
