@@ -11,6 +11,11 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
   "exports": {
     "./eslint": "./eslint.config.js",
     "./prettier": "./prettier.config.js",
@@ -19,11 +24,13 @@
   "files": [
     "eslint.config.js",
     "prettier.config.js",
-    "tsconfig.base.json"
+    "tsconfig.base.json",
+    "LICENSE"
   ],
   "peerDependencies": {
     "eslint": ">=9",
     "prettier": ">=3",
+    "prettier-plugin-tailwindcss": ">=0.6",
     "typescript": ">=5.5"
   },
   "dependencies": {
@@ -33,5 +40,11 @@
     "eslint-plugin-react-refresh": "^0.5.0",
     "globals": "^17.0.0",
     "typescript-eslint": "^8.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "^6.0.3"
   }
 }

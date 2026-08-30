@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -33,6 +35,25 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: "@martinca"
           package-manager-cache: false
+
+      # What gets published is the default branch, not the tagged commit, because
+      # the bump commit below has to land on a branch. That is only correct when
+      # the two are the same commit — a release cut from an older commit would
+      # otherwise publish newer code under an older version, silently. Fail
+      # instead, and re-cut the release from the branch tip.
+      - name: Release tag is the default branch tip
+        if: github.event_name == 'release'
+        run: |
+          tag_sha="$(git rev-parse --verify "refs/tags/${TAG_NAME}^{commit}")"
+          head_sha="$(git rev-parse --verify HEAD)"
+          if [ "$tag_sha" != "$head_sha" ]; then
+            echo "Tag ${TAG_NAME} is at ${tag_sha} but ${DEFAULT_BRANCH} is at ${head_sha}." >&2
+            echo "Publishing would ship the branch tip under the tag's version. Re-cut the release from the tip." >&2
+            exit 1
+          fi
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
       - name: Resolve version to publish
         id: version
@@ -59,7 +80,7 @@ jobs:
           if ! git diff --quiet -- package.json; then
             git add package.json
             git commit -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
-            git push origin HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}
+            git push origin "HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}"
           fi
         env:
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
