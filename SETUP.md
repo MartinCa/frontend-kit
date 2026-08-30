@@ -42,6 +42,11 @@ The token is only ever sent to `api.github.com`.
 If you would rather not deal with tokens on every machine, make this repo public.
 There is nothing secret in it — it is lint rules and a style guide.
 
+That settles the registry reads described above, and only those. The config
+package on GitHub Packages needs a token whether or not it is public — see
+"Making the repo public does not remove the token" in Part 5 before assuming
+otherwise.
+
 ---
 
 ## Part 2 — Publish the config package
@@ -254,15 +259,11 @@ preference:
    repo's own `GITHUB_TOKEN` read the package, so its CI and Docker build need
    no PAT secret at all and the whole Part 2 secret dance goes away.
 
-   One catch, and it is not a small one. A package published from a repository
-   is *linked* to it and inherits its permissions, and GitHub's own docs say
-   "to access the package's granular permissions settings, you must remove the
-   package's inherited permissions." So this route starts by detaching
-   `@martinca/frontend-config` from `frontend-kit`. Grant `frontend-kit` itself
-   Write in the same sitting — `publish.yml` authenticates with that repo's
-   `GITHUB_TOKEN`, and it is the inherited permission that makes that work
-   today. Cut a throwaway release afterwards to confirm publishing still works
-   before relying on it.
+   "Manage Actions access" is its own list and works alongside "Inherit access
+   from source repository" — leave the inherit box checked. GitHub's docs say
+   inherited permissions must be removed "to access the package's granular
+   permissions settings", but that is about the member list further down the
+   page, not this one. Nothing needs detaching, and `publish.yml` keeps working.
 
    Whether this also covers Renovate is not documented. The setting is
    described in terms of "GitHub Actions workflows in the linked repository";
@@ -294,9 +295,28 @@ land without a review step. Before configuring anything, check whether it is
 already working — if Renovate has opened a PR for this package, its platform
 token can already read it and there is nothing to do.
 
-None of this is needed if `frontend-kit` is public — see "The private-repo
-question" in Part 8. For four hobby projects that remains the better trade, and
-it is the one lever that removes the 401 class of problem everywhere at once.
+### Making the repo public does not remove the token
+
+Worth stating plainly, because it is the opposite of how every other registry
+behaves and it is easy to assume otherwise. GitHub's npm registry requires
+authentication for **every** read: "You need an access token to publish,
+install, and delete private, internal, and public packages." Unlike the
+Container registry, there is no anonymous pull. A public `frontend-kit` and a
+public `@martinca/frontend-config` still answer an unauthenticated request with
+`401 Unauthorized`.
+
+Public visibility does help the *other* channel — the shadcn registry reads in
+Part 1 are plain file reads and work anonymously against a public repo. It just
+does nothing for the package.
+
+So there are only two ways to genuinely stop passing a token around for the
+config package, both already described in Part 2:
+
+- Publish it to `registry.npmjs.org` instead, which does serve public packages
+  anonymously. Keep Renovate, lose GitHub Packages.
+- Drop the package and ship `eslint.config.js`, `prettier.config.js` and
+  `tsconfig.base.json` through the shadcn registry as `registry:file` items.
+  Zero auth, no Renovate automation for them.
 
 ---
 
