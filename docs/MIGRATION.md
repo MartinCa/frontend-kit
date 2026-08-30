@@ -83,6 +83,38 @@ one. If the project is not on Tailwind at all, this is the point where you
 decide whether the migration is worth it — adopting Tailwind alongside an
 existing CSS approach is real work, not a config change.
 
+**Run `init` even if `components.json` and `src/components/ui/` already
+exist by hand** (a project mid-migration that vendored shadcn components
+manually, without ever running the CLI, still needs this). Tailwind v4 needs
+more than `theme.css`'s bare `--background`/`--popover`/etc. custom
+properties to work: an `@theme inline` block registering them under
+Tailwind's `--color-*`/`--radius-*` namespace (so `bg-background`,
+`bg-popover`, etc. exist as utilities at all), a `@custom-variant dark
+(&:is(.dark *))` declaration (Tailwind v4 dropped `darkMode: 'class'` in
+favor of this — without it every `dark:` utility follows the OS's
+`prefers-color-scheme` instead of the `.dark` class `ThemeProvider` toggles),
+and the `tw-animate-css` package (the `animate-in`/`fade-in-0`/`zoom-in-95`/
+`slide-in-from-*` classes `Dialog`/`Select`/`DropdownMenu`/`Tooltip` all use
+for their open/close transitions). `init` writes all three; a hand-assembled
+`components.json` + hand-copied `ui/*.tsx` files do not.
+
+**None of this produces a build error or a lint warning if it's missing** —
+Tailwind just silently omits the utility class from the compiled CSS, so the
+only symptom is a UI bug: dialogs/dropdowns/the header rendering see-through,
+manual dark-mode toggling doing nothing, or every popover losing its
+enter/exit animation. If you inherit a project where this was skipped (or
+suspect it was), diff `src/index.css` against a throwaway reference project
+scaffolded with matching options
+(`npm create vite@latest . -- --template react-ts`, wire up `@tailwindcss/vite`
+and the `@/*` path alias, then
+`npx shadcn@latest init -t vite -b base -p <preset> --pointer -y`) rather
+than guessing — this is also how to find any registry-recipe-specific
+plumbing a given component needs (e.g. `Accordion`'s `animate-accordion-down`/
+`animate-accordion-up` keyframes read a chain of other libraries' panel-height
+variable names, none of which match Base UI's own `--accordion-panel-height` —
+override those two keyframes locally to point at the variable Base UI
+actually sets).
+
 If a conflicting UI kit is present (MUI, Ant, etc.), do **not** rip it out in
 this pass. Let new components go through shadcn/ui and migrate old screens
 opportunistically, screen by screen, when you're touching them anyway. A
