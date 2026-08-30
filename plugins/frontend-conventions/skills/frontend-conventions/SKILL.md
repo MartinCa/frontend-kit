@@ -62,6 +62,7 @@ pnpm dlx shadcn@latest add MartinCa/frontend-kit/conventions   # DESIGN.md + AGE
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/api-client    # typed fetch + ApiError
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup   # QueryClient defaults
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme         # theme tokens
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme-provider # theme provider & dark mode support
 ```
 
 Lint, TypeScript, and Prettier config come from `@martinca/frontend-config`.
