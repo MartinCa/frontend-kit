@@ -57,6 +57,12 @@ Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Run
 `pnpm lint` once and read the count, don't fix it yet — you need to know how
 big the gap is before deciding how to close it.
 
+If this project's CI installs dependencies (a lint/test workflow, or a Docker
+build that runs `pnpm install`), it needs the same GitHub Packages token
+locally configured in `.npmrc` — see SETUP.md Part 2 for the exact secret
+naming gotcha (Actions won't allow a secret named `GITHUB_*`) and the
+BuildKit-secret pattern for Docker builds.
+
 ## 3. Bring in shadcn/ui if it isn't there yet
 
 If the project has no `components.json`:
