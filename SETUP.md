@@ -265,14 +265,26 @@ preference:
    permissions settings", but that is about the member list further down the
    page, not this one. Nothing needs detaching, and `publish.yml` keeps working.
 
-   Whether this also covers Renovate is not documented. The setting is
-   described in terms of "GitHub Actions workflows in the linked repository";
-   a bot authenticating as a GitHub App installation is a different thing, and
-   the docs do not say either way. Treat Renovate as needing option 2 until you
-   have seen it open a PR for this package.
-2. **Give Renovate its own token**, if you would rather not manage per-package
-   access. A classic PAT with `read:packages` (fine-grained tokens are not the
-   documented path for the npm registry), stored encrypted:
+   This does **not** cover Renovate. The setting is scoped to GitHub Actions
+   workflows in the granted repository; the Mend-hosted Renovate app
+   authenticates as a GitHub App installation, which is a different principal.
+   Confirmed the hard way — with the repository granted Read, Renovate still
+   reported `Failed to look up npm package @martinca/frontend-config:
+   no-result` on its Dependency Dashboard. Renovate needs option 2.
+2. **Give Renovate its own token.** A classic PAT with `read:packages`
+   (fine-grained tokens are not the documented path for the npm registry).
+
+   Do not use the `encrypted` config block for this. Mend disabled encrypted
+   secrets in config files for its hosted apps — secrets now live in the web
+   UI. At [developer.mend.io](https://developer.mend.io), open the settings
+   for the account or the repository (admin rights required), go to
+   **Credentials → ADD SECRET**, and paste the PAT as **plaintext** — the
+   portal encrypts it. A secret added at account level is inherited by every
+   repository under it, so this is done once, not per project.
+
+   Then either add the host rule in the same portal (**Credentials → Host
+   Rules**), which needs no repository config at all, or reference the secret
+   from a repo's own `renovate.json`:
 
    ```json
    {
@@ -280,7 +292,7 @@ preference:
        {
          "matchHost": "https://npm.pkg.github.com/",
          "hostType": "npm",
-         "encrypted": { "token": "<encrypted PAT>" }
+         "token": "{{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}"
        }
      ]
    }
@@ -288,6 +300,12 @@ preference:
 
    Keep the trailing slash on `matchHost`. To override Renovate's automatic
    rule your rule has to be at least as specific as the one it generates.
+
+   Put this in each consuming repo, or use the portal's Host Rules — **not**
+   in `renovate-frontend.json`. Renovate's docs do not say whether a
+   `{{ secrets.* }}` reference resolves inside a shared preset that other
+   repositories extend, and a silently unresolved token here fails the same
+   quiet way the original lookup did.
 
 `renovate-frontend.json` already automerges patch and minor bumps of
 `@martinca/frontend-config`, so once it can read the package the config updates
