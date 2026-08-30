@@ -97,6 +97,13 @@ over from the GitHub Packages era and can go.
 - Two projects solving the same problem two different ways outside what
   DESIGN.md governs — that's a signal to add a new registry item or convention
   upstream, not to let it happen a third time.
+- A build failing with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` on packages
+  nobody deliberately updated. The message blames the lockfile — "the lockfile
+  is stale, or ... someone committed a lockfile that bypassed the policy" —
+  which is usually wrong. It means pnpm 11's default supply-chain policy is
+  running where the project's `pnpm-workspace.yaml` settings are not reaching
+  it. In a Docker build, check that file is in the `COPY` for the dependency
+  layer (SETUP.md Part 6).
 - `SKILL.md` changed in frontend-kit but `plugins/frontend-conventions/.claude-plugin/plugin.json`
   still shows the same version — installed plugins have nothing to compare
   against, so the update may not reach machines that already have it. Bump the
