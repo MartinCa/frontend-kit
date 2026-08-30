@@ -58,10 +58,14 @@ Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Run
 big the gap is before deciding how to close it.
 
 If this project's CI installs dependencies (a lint/test workflow, or a Docker
-build that runs `pnpm install`), it needs the same GitHub Packages token
-locally configured in `.npmrc` — see SETUP.md Part 2 for the exact secret
-naming gotcha (Actions won't allow a secret named `GITHUB_*`) and the
-BuildKit-secret pattern for Docker builds.
+build that runs `pnpm install`), it needs a GitHub Packages token. The repo's
+committed `.npmrc` gets the scope-to-registry line only; the token goes in a
+user-level npmrc at build time, because pnpm 11 ignores an environment-variable
+credential in a project `.npmrc` and then fails with a 401 that looks like a
+missing token. See SETUP.md Part 2 for that, the secret naming gotcha (Actions
+won't allow a secret named `GITHUB_*`), and the BuildKit pattern for Docker
+builds — and Part 5 for the one package setting that lets the repo's own
+`GITHUB_TOKEN` do this instead of a PAT.
 
 ## 3. Bring in shadcn/ui if it isn't there yet
 

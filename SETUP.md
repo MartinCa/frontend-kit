@@ -71,13 +71,33 @@ or status checks before a push lands, that push will fail — either add an
 exception for `github-actions[bot]`, or drop this step and go back to bumping
 `package.json` by hand before tagging.
 
-Consuming projects need one line in `.npmrc`:
+Consuming projects need one line in the project's committed `.npmrc` — the
+scope-to-registry mapping, and nothing else:
 
 ```
 @martinca:registry=https://npm.pkg.github.com
 ```
 
-and a token with `read:packages` in CI. For local dev, `gh auth token` works:
+**The token does not go in that file.** Since pnpm 11, an `_authToken` line in
+a project-level `.npmrc` whose value is an environment variable is ignored, with
+a warning rather than an error:
+
+```
+[WARN] Ignored project-level auth setting "//npm.pkg.github.com/:_authToken" in
+"/frontend/.npmrc": environment variables are not expanded in registry
+credentials that come from a project .npmrc, because that file is committed to
+the repository and could leak the secret to an attacker-controlled registry.
+```
+
+The install then continues without an auth header and fails later with
+`ERR_PNPM_FETCH_401 ... No authorization header was set for the request`, which
+reads like a missing token rather than an ignored one. pnpm still expands the
+same `${VAR}` in a *user-level* config, which is the fix everywhere below. (A
+hardcoded literal token in a project `.npmrc` is still honoured — that is how
+Renovate's own lockfile updates keep working — but committing one is the thing
+the change exists to prevent.)
+
+For local dev, `gh auth token` writes a literal into the user-level file:
 
 ```sh
 echo "//npm.pkg.github.com/:_authToken=$(gh auth token)" >> ~/.npmrc
@@ -94,18 +114,39 @@ is unaffected by this — that restriction only applies to the secret's name in
 Actions settings, map one to the other in the workflow:
 
 ```yaml
+- name: Authenticate to GitHub Packages
+  run: echo "//npm.pkg.github.com/:_authToken=$GITHUB_PACKAGES_TOKEN" >> ~/.npmrc
+  env:
+    GITHUB_PACKAGES_TOKEN: ${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }}
+
 - name: Build
-  run: GITHUB_PACKAGES_TOKEN=${{ secrets.FRONTEND_KIT_PACKAGES_TOKEN }} pnpm install --frozen-lockfile
+  run: pnpm install --frozen-lockfile
 ```
+
+`~/.npmrc` on the runner, not the repo's `.npmrc` — see the pnpm 11 note above.
+The runner is destroyed after the job, and `$GITHUB_PACKAGES_TOKEN` is a
+registered secret, so Actions masks it if it ever reaches the log.
 
 If the project builds through Docker (multi-stage build installing the
 frontend), pass the same secret into BuildKit rather than an `ARG` — an `ARG`
 bakes the token into an image layer:
 
 ```dockerfile
+# The auth line goes in a user-level npmrc, written and removed inside a single
+# RUN so it never lands in a layer. Exporting NPM_CONFIG_USERCONFIG rather than
+# writing ~/.npmrc keeps this working whatever user the base image runs as.
 RUN --mount=type=secret,id=github_packages_token \
-    GITHUB_PACKAGES_TOKEN="$(cat /run/secrets/github_packages_token)" pnpm install --frozen-lockfile
+    export NPM_CONFIG_USERCONFIG=/tmp/npmrc && \
+    printf '//npm.pkg.github.com/:_authToken=%s\n' \
+      "$(cat /run/secrets/github_packages_token)" > "$NPM_CONFIG_USERCONFIG" && \
+    pnpm install --frozen-lockfile; \
+    status=$?; rm -f "$NPM_CONFIG_USERCONFIG"; exit "$status"
 ```
+
+Passing the secret as an env var on the `pnpm install` line itself — the
+obvious shape, and what this file recommended before pnpm 11 — silently does
+nothing, because the only thing that would have read that variable is the
+project `.npmrc` line pnpm now ignores.
 
 ```yaml
 - uses: docker/build-push-action@...
@@ -192,6 +233,53 @@ keep it here and reference it by path). Then in each frontend project:
 Renovate cannot see shadcn components — they are your source files, not
 dependencies. It will keep the primitives underneath them current, which is
 where the actual security surface is.
+
+### Renovate and the private package
+
+A private package on GitHub Packages does not stop Renovate from updating it,
+and in the common case there is nothing to configure: Renovate automatically
+provisions host rules for `*.pkg.github.com` using its own platform token. That
+covers version lookups *and* the `pnpm install` it runs to refresh
+`pnpm-lock.yaml` — Renovate writes a literal token into the npmrc it generates
+at that moment, which is not what pnpm 11 rejects (it only refuses to expand
+environment variables in a *committed* project `.npmrc`).
+
+The catch is reach, not mechanism. That platform token only sees repositories
+Renovate is installed on, and `@martinca/frontend-config` lives in a different
+repo from the project consuming it. Two ways to close the gap, in order of
+preference:
+
+1. **Grant the consuming repo read access to the package.** In the package's
+   settings, under "Manage Actions access", add the repository. This is worth
+   doing regardless of Renovate: it also lets that repo's own `GITHUB_TOKEN`
+   read the package, so its CI and Docker build need no PAT secret at all and
+   the whole Part 2 secret dance goes away.
+2. **Give Renovate its own token**, if you would rather not manage per-package
+   access. A classic PAT with `read:packages` (fine-grained tokens are not the
+   documented path for the npm registry), stored encrypted:
+
+   ```json
+   {
+     "hostRules": [
+       {
+         "matchHost": "https://npm.pkg.github.com/",
+         "hostType": "npm",
+         "encrypted": { "token": "<encrypted PAT>" }
+       }
+     ]
+   }
+   ```
+
+   Keep the trailing slash on `matchHost`. To override Renovate's automatic
+   rule your rule has to be at least as specific as the one it generates.
+
+`renovate-frontend.json` already automerges patch and minor bumps of
+`@martinca/frontend-config`, so once it can read the package the config updates
+land without a review step.
+
+None of this is needed if `frontend-kit` is public — see "The private-repo
+question" in Part 8. For four hobby projects that remains the better trade, and
+it is the one lever that removes the 401 class of problem everywhere at once.
 
 ---
 
