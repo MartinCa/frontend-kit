@@ -1,6 +1,6 @@
 {
   "name": "@martinca/frontend-config",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Shared frontend conventions: ESLint, TypeScript and Prettier config for React + shadcn/ui projects.",
   "license": "MIT",
   "type": "module",
