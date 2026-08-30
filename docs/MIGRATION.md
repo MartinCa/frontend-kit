@@ -48,6 +48,10 @@ Wire the shared config (see SETUP.md Part 6 for the exact file contents):
 pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcss
 ```
 
+No version pinned — let pnpm resolve current releases rather than writing
+numbers into `package.json` by hand. An agent doing this from memory tends
+to guess an old version.
+
 Point `eslint.config.js`, `prettier.config.js`, and `tsconfig.json` at it. Run
 `pnpm lint` once and read the count, don't fix it yet — you need to know how
 big the gap is before deciding how to close it.
@@ -166,6 +170,9 @@ it. In short:
 3. Add @martinca/frontend-config as a dev dependency and wire eslint.config.js,
    prettier.config.js, and tsconfig.json to extend it. Run the linter and
    report the violation count — do not silently disable rules to make it pass.
+   Whenever you add a dependency in this migration, install it with the
+   package manager (no version pin) rather than writing a version number
+   into package.json from memory — that number is routinely out of date.
 4. If components.json doesn't exist, run `shadcn init` (ask me for a preset
    code first, or use the one in this project's DESIGN.md/README if already
    recorded). Do not remove an existing UI library — new components go

@@ -177,6 +177,15 @@ pnpm add -D @martinca/frontend-config eslint prettier prettier-plugin-tailwindcs
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
 
+Run those `pnpm add` commands as shown — with no version pinned — so pnpm
+resolves whatever is current today. If an agent is doing this step, that
+matters more than usual: an agent that writes version numbers into
+`package.json` by hand instead of running `pnpm add` will reach for
+whatever version its training data remembers, which is routinely a major
+or two behind. Same warning applies everywhere else in this kit a
+dependency gets added — the migration agent prompt in
+[docs/MIGRATION.md](./docs/MIGRATION.md) included.
+
 Three files in the project reference the shared config:
 
 **eslint.config.js**
