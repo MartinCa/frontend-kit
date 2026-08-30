@@ -83,6 +83,39 @@ and a token with `read:packages` in CI. For local dev, `gh auth token` works:
 echo "//npm.pkg.github.com/:_authToken=$(gh auth token)" >> ~/.npmrc
 ```
 
+**Naming the CI secret:** GitHub Actions rejects any repository/organization
+secret whose name starts with `GITHUB_` — that prefix is reserved for its own
+automatic variables. Pick something else for the secret itself (e.g.
+`GH_PACKAGES_TOKEN`); the env var name you reference in `.npmrc`
+(`GITHUB_PACKAGES_TOKEN` or whatever you called it) is unaffected by this —
+that restriction only applies to the secret's name in Actions settings, map
+one to the other in the workflow:
+
+```yaml
+- name: Build
+  run: GITHUB_PACKAGES_TOKEN=${{ secrets.GH_PACKAGES_TOKEN }} pnpm install --frozen-lockfile
+```
+
+If the project builds through Docker (multi-stage build installing the
+frontend), pass the same secret into BuildKit rather than an `ARG` — an `ARG`
+bakes the token into an image layer:
+
+```dockerfile
+RUN --mount=type=secret,id=github_packages_token \
+    GITHUB_PACKAGES_TOKEN="$(cat /run/secrets/github_packages_token)" pnpm install --frozen-lockfile
+```
+
+```yaml
+- uses: docker/build-push-action@...
+  with:
+    secrets: |
+      github_packages_token=${{ secrets.GH_PACKAGES_TOKEN }}
+```
+
+Note PRs from forks never see this secret (GitHub withholds all secrets from
+fork-triggered workflow runs) — a Docker build step will fail there. That's
+expected for a private-package dependency, not a bug to chase.
+
 **If that friction is not worth it** — and for four hobby projects it may not be —
 drop the npm package entirely and distribute the three config files through the
 shadcn registry as well, as `registry:file` items targeting `eslint.config.js`,
