@@ -142,8 +142,8 @@ bakes the token into an image layer:
 # writing ~/.npmrc keeps this working whatever user the base image runs as.
 RUN --mount=type=secret,id=github_packages_token \
     export NPM_CONFIG_USERCONFIG=/tmp/npmrc && \
-    printf '//npm.pkg.github.com/:_authToken=%s\n' \
-      "$(cat /run/secrets/github_packages_token)" > "$NPM_CONFIG_USERCONFIG" && \
+    echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_packages_token)" \
+      > "$NPM_CONFIG_USERCONFIG" && \
     pnpm install --frozen-lockfile; \
     status=$?; rm -f "$NPM_CONFIG_USERCONFIG"; exit "$status"
 ```
