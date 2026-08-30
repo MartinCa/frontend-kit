@@ -4,9 +4,13 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 0.2.0 (only used for a manual run; a release's tag is used otherwise)"
+        required: false
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -16,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event.repository.default_branch }}
 
       - uses: actions/setup-node@v4
         with:
@@ -24,13 +28,29 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: "@martinca"
 
-      - name: Verify release tag matches package version
+      - name: Resolve version to publish
+        id: version
         run: |
+          version="${{ github.event.inputs.version }}"
           tag="${{ github.event.release.tag_name }}"
-          pkg="v$(node -p "require('./package.json').version")"
-          if [ -n "$tag" ] && [ "$pkg" != "$tag" ]; then
-            echo "Release tag $tag does not match package.json version $pkg" >&2
+          if [ -n "$tag" ]; then
+            version="${tag#v}"
+          fi
+          if [ -z "$version" ]; then
+            echo "No version resolved. A release tag or a workflow_dispatch version input is required." >&2
             exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Bump package.json to match and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+          if ! git diff --quiet -- package.json; then
+            git add package.json
+            git commit -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
+            git push origin HEAD:${{ github.event.repository.default_branch }}
           fi
 
       - run: npm publish --provenance

@@ -50,16 +50,26 @@ The package is scoped `@martinca` and publishes to GitHub Packages, which is
 free for private packages and needs no npmjs account.
 
 ```sh
-npm version 0.1.0
-git push
-gh release create v0.1.0 --generate-notes   # the publish workflow fires on release publish
+gh release create v0.1.0 --generate-notes
 ```
 
-The workflow triggers on a published GitHub Release, not on the tag push
-itself — `npm version` creates the tag locally, but nothing publishes until
-you create the release (tag pushes alone no longer trigger it). Marking a
-release as a pre-release skips publishing; `workflow_dispatch` is still there
-for a manual re-run if a publish needs retriggering.
+That's the only step — no local `npm version` needed. The workflow fires on
+a published GitHub Release, reads the version from the tag (`v0.1.0` →
+`0.1.0`), bumps `package.json` to match, commits that bump straight to the
+default branch, and publishes. Marking a release as a pre-release skips
+publishing. For a one-off publish with no release at all, run the workflow
+manually (`workflow_dispatch`) and give it a version in the input field.
+
+This means the version lives in the release tag, not in a commit you make by
+hand — `package.json`'s version is just a record of the last thing published,
+kept in sync automatically. Don't hand-edit it; the next release overwrites
+whatever is there.
+
+The workflow pushes that bump commit straight to the default branch using the
+default `GITHUB_TOKEN`. If branch protection on this repo ever requires PRs
+or status checks before a push lands, that push will fail — either add an
+exception for `github-actions[bot]`, or drop this step and go back to bumping
+`package.json` by hand before tagging.
 
 Consuming projects need one line in `.npmrc`:
 
