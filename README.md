@@ -20,7 +20,7 @@ it: [docs/MAINTENANCE.md](./docs/MAINTENANCE.md).
 
 ## Preset
 
-Design system preset code: `<paste from ui.shadcn.com/create>`
+Design system preset code: `b0`
 
 This is the one manual step in the whole kit — the code is generated
 interactively and can't be scripted. Go to `ui.shadcn.com/create` and pick:
