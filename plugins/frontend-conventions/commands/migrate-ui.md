@@ -20,6 +20,7 @@ Follow these steps in order:
 3. **Install Required shadcn/ui Primitives**:
    - For all needed primitives (button, dialog, dropdown-menu, input, table, etc.), install via:
      `pnpm dlx shadcn@latest add <component>`
+   - Patch known Base UI quirks (RadioGroupItem centering, DialogContent/DialogFooter mobile constraints per DESIGN.md section 3).
    - Commit any newly vendored `src/components/ui/` files in an untouched commit before editing application code.
 
 4. **Screen-by-Screen Migration**:
@@ -28,7 +29,7 @@ Follow these steps in order:
      - Replace legacy icons with `lucide-react`.
      - Replace ad-hoc colors and style objects with Tailwind semantic tokens (`bg-background`, `text-foreground`, `border-border`, `status-*`).
      - Migrate forms to `react-hook-form` + `zod` and tables to TanStack Table where appropriate.
-     - Preserve user flows, behavior, and ensure visible focus rings and mobile responsiveness.
+     - Preserve user flows, behavior, and ensure visible focus rings and mobile responsiveness (<640px viewport bounds, `w-full sm:w-auto` dialog buttons, `min-w-0 flex-1` truncation, and `break-all` on diffs/paths).
    - Commit each migrated screen or component group separately with a descriptive commit message.
 
 5. **Decommission Legacy UI**:
