@@ -97,10 +97,11 @@ jobs:
           npm version "${STEPS_VERSION_OUTPUTS_VERSION}" --no-git-tag-version --allow-same-version
           if ! git diff --quiet -- package.json; then
             git add package.json
-            git commit -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
+            git commit --no-verify -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
             git push origin "HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}"
           fi
         env:
+          HUSKY: "0"
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
           GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
