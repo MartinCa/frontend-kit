@@ -113,7 +113,11 @@ plumbing a given component needs (e.g. `Accordion`'s `animate-accordion-down`/
 `animate-accordion-up` keyframes read a chain of other libraries' panel-height
 variable names, none of which match Base UI's own `--accordion-panel-height` —
 override those two keyframes locally to point at the variable Base UI
-actually sets).
+actually sets). Two more component-specific quirks, found the same way, are
+documented where they belong regardless of migration-vs-fresh-init:
+`RadioGroupItem`'s indicator not self-centering, and `DialogContent` having no
+built-in scroll bound — see DESIGN.md section 3, "Known Base UI component
+quirks."
 
 If a conflicting UI kit is present (MUI, Ant, etc.), do **not** rip it out in
 this pass. Let new components go through shadcn/ui and migrate old screens
