@@ -96,6 +96,49 @@ Components are **copied into this repo** and are therefore our code. That has co
   occasional chore — Renovate cannot do it. Run it when there is a reason to, not on a schedule.
 - Use `shadcn docs <component>` to get current API surface rather than recalling props.
 
+### Known Base UI component quirks
+
+Found empirically, not documented by shadcn or Base UI — no build error, no lint
+warning, no console message, just a UI bug the first time real content or a real
+form hits the component. Patch these right after `add`, the same way you'd handle
+the Accordion keyframe gotcha in [MIGRATION.md](../docs/MIGRATION.md).
+
+**`radio-group.tsx`: the indicator doesn't self-center.** Base UI's
+`Radio.Indicator` centers its own children (the dot icon) but not itself within
+the root circle — unlike `checkbox.tsx`'s root, which already carries
+`grid place-content-center` for the same reason. Add the same two classes to
+`RadioGroupItem`'s root:
+
+```diff
+  <RadioPrimitive.Root
+    className={cn(
+-     "border-primary text-primary ... aspect-square h-4 w-4 cursor-pointer rounded-full border ...",
++     "border-primary text-primary ... grid aspect-square h-4 w-4 cursor-pointer place-content-center rounded-full border ...",
+```
+
+**`dialog.tsx`: `DialogContent` sets no `max-h`/`overflow` of its own.** shadcn's
+own docs describe the fix as a flex header/body/footer split, but nothing in the
+generated component enforces it — so the easy first move,
+`<DialogContent className="max-h-[85vh] overflow-y-auto">` wrapped around content
+that already has its own bounded list or table, produces two independently
+scrolling regions nested inside each other (visibly two scrollbars), and skipping
+the wrapper entirely lets a tall dialog grow straight past the viewport instead of
+scrolling internally. Structure any dialog whose content can overflow as:
+
+```tsx
+<DialogContent className="flex max-h-[85vh] flex-col overflow-hidden">
+  <DialogHeader>...</DialogHeader>
+  <div className="flex-1 overflow-y-auto">...</div>
+  {/* a fixed action row, if any, is a sibling here — not inside the scroll area */}
+</DialogContent>
+```
+
+Drop `max-h-*`/`overflow-y-auto` from any bounded child inside that body — the
+outer body is now the only scroll container (give it `overflow-x-auto` too if the
+content can also overflow horizontally, e.g. a wide table). Skip the split, and
+the outer `max-h`/`overflow-hidden`, for a dialog that can never overflow (a
+confirm prompt, a short form) — it's dead weight there.
+
 ---
 
 ## 4. Structure
