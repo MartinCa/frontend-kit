@@ -103,7 +103,11 @@ Not optional, and not worth debating in review:
 - Every async surface defines loading, empty, and error states.
 - Error text says what happened and what to do next. It does not apologize.
 - Button labels are verbs, consistent through a flow: "Publish" → "Published".
-- Works at 375px wide.
+- Works at 375px wide with zero horizontal scrollbars or modal clipping:
+  - Modals and overlays must use `w-[calc(100vw-2rem)] sm:w-full max-w-lg max-h-[90dvh] overflow-y-auto`.
+  - Dialog footers must use `flex flex-col-reverse sm:flex-row sm:justify-end gap-2` with `className="w-full sm:w-auto"` on buttons for touch targets.
+  - Flex text containers beside fixed items (badges, icons) must have `min-w-0 flex-1` for `truncate` / `break-words`.
+  - Monospace, diff, path, and URL blocks must include `break-all whitespace-pre-wrap` to avoid horizontal overflow.
 
 ## When unsure
 

@@ -124,9 +124,9 @@ variable names, none of which match Base UI's own `--accordion-panel-height` —
 override those two keyframes locally to point at the variable Base UI
 actually sets). Two more component-specific quirks, found the same way, are
 documented where they belong regardless of migration-vs-fresh-init:
-`RadioGroupItem`'s indicator not self-centering, and `DialogContent` having no
-built-in scroll bound — see DESIGN.md section 3, "Known Base UI component
-quirks."
+`RadioGroupItem`'s indicator not self-centering, and overlay mobile clipping /
+lack of built-in scroll bounds (`DialogContent`, `DialogFooter`, `AlertDialogContent`) —
+see DESIGN.md section 3, "Known Base UI component quirks & overlay mobile safety."
 
 If a conflicting UI kit is present (MUI, Ant, etc.):
 
@@ -306,6 +306,8 @@ A. Inventory: Scan the codebase for all components imported from legacy UI libra
 B. Install shadcn/ui components: For each legacy component needed across the screens
    (buttons, dialogs, dropdowns, inputs, forms, tables, cards, tabs, etc.), install
    the Base UI-based equivalent from shadcn/ui (`pnpm dlx shadcn@latest add <component>`).
+   Patch any known Base UI quirks (such as RadioGroupItem centering and DialogContent/
+   DialogFooter mobile constraints per DESIGN.md section 3).
    Keep freshly vendored `src/components/ui/` components untouched in their own commit.
 C. Theme & Styling: Install `MartinCa/frontend-kit/theme` and `MartinCa/frontend-kit/theme-provider`.
    Ensure `main.tsx` (or the application root) wraps the tree in `<ThemeProvider>` so dark mode
@@ -313,7 +315,9 @@ C. Theme & Styling: Install `MartinCa/frontend-kit/theme` and `MartinCa/frontend
    tokens (`bg-background`, `text-foreground`, `border-border`, `status-*`).
 D. Screen-by-Screen Replacement: Migrate each screen and component from the legacy UI library
    to the installed shadcn/ui components. Preserve existing behaviour and accessibility while
-   updating to house conventions (lucide-react icons, react-hook-form + zod forms, TanStack Table).
+   updating to house conventions (lucide-react icons, react-hook-form + zod forms, TanStack Table,
+   mobile responsiveness with `min-w-0 flex-1` truncation, `w-full sm:w-auto` dialog buttons,
+   and `break-all` on monospace/path blocks).
    Commit each migrated screen or component family in a dedicated commit.
 E. Decommission Legacy UI: Once all usages are replaced, remove the legacy UI packages from
    `package.json` with `pnpm remove <pkg>`, remove any obsolete CSS/theme files, and verify
@@ -350,12 +354,15 @@ Execute this migration in two phases:
 
 --- PHASE 2: FULL UI MIGRATION ---
 7. Install required shadcn/ui components (`pnpm dlx shadcn@latest add <component>`) to
-   cover every UI primitive used in the app. Commit the untouched `src/components/ui/` additions.
+   cover every UI primitive used in the app (applying Base UI quirks such as DialogContent/
+   DialogFooter mobile bounds and RadioGroupItem centering per DESIGN.md section 3).
+   Commit the untouched `src/components/ui/` additions.
 8. Systematically migrate all screens and components from legacy UI libraries to shadcn/ui:
    - Replace legacy components with shadcn/ui equivalents.
    - Replace legacy icons with `lucide-react`.
    - Replace ad-hoc styling and hardcoded colors with Tailwind semantic tokens.
-   - Respect DESIGN.md rules (a11y, focus rings, loading/empty/error states, mobile support).
+   - Respect DESIGN.md rules (a11y, focus rings, loading/empty/error states, mobile responsiveness
+     with `min-w-0 flex-1` truncation, `w-full sm:w-auto` dialog buttons, and `break-all` on paths/diffs).
    - Commit each migrated screen or component group separately.
 9. Decommission legacy UI libraries:
    - Uninstall legacy packages (`pnpm remove <pkg>`).
