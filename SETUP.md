@@ -283,7 +283,7 @@ pnpm dlx shadcn@latest add \
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
-pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss husky lint-staged
 ```
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
@@ -376,16 +376,73 @@ rejects the lockfile, while the same command passes on your machine — where
 the file is obviously present. Testing the settings is not the same as testing
 the build; reproduce the `COPY` set in a scratch directory if in doubt.
 
-**package.json scripts** — DESIGN.md section 1 says lint is enforced in CI, and
+**package.json scripts and git hooks** — DESIGN.md section 1 says lint is enforced in CI, and
 that is only true with `--max-warnings 0`. Some rules in the shared config are
 deliberately warnings (`no-console`, `react-refresh/only-export-components`)
 because they are noisy mid-edit, and `eslint` exits 0 on warnings, so without
-the flag CI stays green while they accumulate:
+the flag CI stays green while they accumulate.
+
+Add scripts, `"prepare": "husky"`, and `lint-staged` configuration to `package.json`:
 
 ```jsonc
-"lint": "eslint .",
-"lint:ci": "eslint . --max-warnings 0",
-"format:check": "prettier --check ."
+"scripts": {
+  "lint": "eslint . --max-warnings 0",
+  "format-check": "prettier --check .",
+  "format": "prettier --write .",
+  "prepare": "husky"
+},
+"lint-staged": {
+  "*.{ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "*.{json,css,md,js,mjs,html}": [
+    "prettier --write"
+  ]
+}
+```
+
+Initialize husky pre-commit hook (`.husky/pre-commit`):
+
+```sh
+pnpm exec husky init
+echo "pnpm lint-staged" > .husky/pre-commit
+```
+
+**.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm run lint
+      - name: Format check
+        run: pnpm run format-check
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Test
+        run: pnpm test
 ```
 
 **vite.config.ts** — the `/api` proxy that makes the backend interchangeable:
