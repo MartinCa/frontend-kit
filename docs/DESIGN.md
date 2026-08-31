@@ -28,7 +28,7 @@ is not listed in **Allowed dependencies** without asking first.
 | Charts | shadcn/ui Charts (Recharts) | new charting lib per project |
 | Dates | `date-fns` | moment, hand-rolled parsing |
 | Tests | Vitest + Testing Library; Playwright only where a flow is worth it | Enzyme, snapshot-everything |
-| Lint/format | ESLint (typescript-eslint) + Prettier, both enforced in CI with `--max-warnings 0` | per-file disables without a reason comment; a lint job that passes on warnings |
+| Lint/format | ESLint (typescript-eslint, TanStack Query plugin) + Prettier, pre-commit hooks (Husky + lint-staged), both enforced in CI with `--max-warnings 0` | per-file disables without a reason comment; a lint job that passes on warnings |
 
 **Default to the SPA path.** Most projects here are internal tools behind auth on a
 private network. They do not need SSR, RSC, or an SEO story, and the client/server
@@ -250,6 +250,7 @@ is ASP.NET Core, FastAPI, Flask, or a Go binary. The rules below keep it that wa
 - Types come from the API contract, not from guesses. If the shape is unknown, ask rather
   than writing an interface that will silently drift.
 - No `any`, no `@ts-expect-error` without a comment explaining the underlying issue.
+- Always run the mandatory verification commands before opening a PR: `pnpm run lint` (`--max-warnings 0`), `pnpm run format-check`, `tsc --noEmit`, and `pnpm test`.
 - When unsure between two reasonable approaches, pick the one with less indirection and say
   in the PR why.
 

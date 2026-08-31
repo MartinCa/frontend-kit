@@ -73,3 +73,12 @@ test("generated route tree files are ignored", async () => {
   const isIgnored = await eslint.isPathIgnored(path.join(fixtures, "src/routeTree.gen.ts"));
   assert.equal(isIgnored, true, "src/routeTree.gen.ts must be ignored by eslint");
 });
+
+test("TanStack Query recommended rules fire", async () => {
+  const counts = await lintFixture("query.tsx");
+  assert.equal(
+    counts.get("@tanstack/query/exhaustive-deps"),
+    1,
+    "missing query key dependency must be caught by @tanstack/query/exhaustive-deps",
+  );
+});
