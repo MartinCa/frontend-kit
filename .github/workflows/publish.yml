@@ -37,7 +37,9 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-          package-manager-cache: false
+          cache: npm
+
+      - run: npm ci
 
       # Trusted publishing needs npm 11.5.1+. Node 24 ships a new enough npm,
       # but a runner image change would otherwise surface as an auth error
@@ -110,4 +112,4 @@ jobs:
       # at npmjs.com, and that cannot be done before the package exists — the
       # first version had to be published manually with a token. See Part 2 of
       # SETUP.md.
-      - run: npm publish
+      - run: npm publish --ignore-scripts
