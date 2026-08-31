@@ -39,3 +39,17 @@ jobs:
       # config whose rules never match anything.
       - name: Shared ESLint config behaves
         run: npm test
+
+      # Simulates the release publishing flow (version bump, commit with no-verify,
+      # and dry-run pack/publish) to catch release workflow breakages on PRs
+      # before tags are created.
+      - name: Simulate release publish flow (dry run)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version "999.999.999" --no-git-tag-version --allow-same-version
+          git add package.json
+          git commit --no-verify -m "chore: test release [skip ci]"
+          npm publish --dry-run --ignore-scripts
+        env:
+          HUSKY: "0"
