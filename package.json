@@ -1,6 +1,6 @@
 {
   "name": "@martinrun/frontend-config",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Shared frontend conventions: ESLint, TypeScript and Prettier config for React + shadcn/ui projects.",
   "license": "MIT",
   "type": "module",
