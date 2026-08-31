@@ -15,8 +15,8 @@ One repo, three distribution channels:
 Start here: [SETUP.md](./SETUP.md). The rules themselves: [docs/DESIGN.md](./docs/DESIGN.md).
 
 Bringing an existing repo onto this: [docs/MIGRATION.md](./docs/MIGRATION.md)
-(includes a ready-to-paste agent prompt). Ongoing upkeep once a project is on
-it: [docs/MAINTENANCE.md](./docs/MAINTENANCE.md).
+(includes ready-to-paste agent prompts for incremental adoption and full UI migration).
+Ongoing upkeep once a project is on it: [docs/MAINTENANCE.md](./docs/MAINTENANCE.md).
 
 ## Preset
 

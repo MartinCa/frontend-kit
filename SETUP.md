@@ -1,8 +1,8 @@
 # Setting this up
 
 Bringing an *existing* repo onto this kit (rather than starting fresh)?
-Skip to [docs/MIGRATION.md](./docs/MIGRATION.md) instead — it has a
-ready-to-paste agent prompt.
+Skip to [docs/MIGRATION.md](./docs/MIGRATION.md) instead — it has
+ready-to-paste agent prompts for incremental adoption and full UI migration.
 
 One repository, `MartinCa/frontend-kit`, distributing conventions through three
 channels because the three kinds of rule need three kinds of enforcement:
@@ -296,7 +296,7 @@ part matters more than usual: an agent that writes the version number
 into `package.json` by hand instead of running `pnpm add` will reach for
 whatever version its training data remembers, which is routinely a major
 or two behind. Same warning applies everywhere else in this kit a
-dependency gets added — the migration agent prompt in
+dependency gets added — the migration agent prompts in
 [docs/MIGRATION.md](./docs/MIGRATION.md) included.
 
 Three files in the project reference the shared config:
