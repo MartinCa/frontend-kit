@@ -43,7 +43,7 @@
     "eslint": ">=9",
     "prettier": ">=3",
     "prettier-plugin-tailwindcss": ">=0.6",
-    "typescript": ">=5.5 <7"
+    "typescript": ">=5.5 <8"
   },
   "dependencies": {
     "@eslint/js": "^10.0.0",
@@ -60,6 +60,6 @@
     "lint-staged": "17.4.1",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }
