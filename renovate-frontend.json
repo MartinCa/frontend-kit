@@ -39,9 +39,7 @@
       "schedule": ["before 6am on monday"]
     },
     {
-      "matchPackageNames": [
-        "@martinrun/frontend-config"
-      ],
+      "matchPackageNames": ["@martinrun/frontend-config"],
       "minimumReleaseAge": null
     },
     {
