@@ -12,12 +12,12 @@
         {
           "path": "docs/DESIGN.md",
           "type": "registry:file",
-          "target": "DESIGN.md"
+          "target": "~/DESIGN.md"
         },
         {
           "path": "docs/AGENTS.md",
           "type": "registry:file",
-          "target": "AGENTS.md"
+          "target": "~/AGENTS.md"
         }
       ]
     },
@@ -30,7 +30,7 @@
         {
           "path": "plugins/frontend-conventions/skills/frontend-conventions/SKILL.md",
           "type": "registry:file",
-          "target": ".claude/skills/frontend-conventions/SKILL.md"
+          "target": "~/.claude/skills/frontend-conventions/SKILL.md"
         }
       ]
     },
