@@ -26,6 +26,22 @@ for (const item of registry.items) {
     if (file.type === "registry:file" && !file.target) {
       fail(`registry: ${item.name} -> ${file.path} is registry:file with no target`);
     }
+    // SETUP.md Part 9: a registry:file target with no directory (DESIGN.md,
+    // AGENTS.md) or a dotfile directory (.claude/...) resolves relative to the
+    // consuming project's alias-derived source root (usually src/), not the
+    // project root, unless prefixed with `~/`. A bare top-level or dotfile
+    // target without that prefix is a project-root file that will land in the
+    // wrong place.
+    if (file.type === "registry:file" && file.target && !file.target.startsWith("~/")) {
+      const looksRootLevel = !file.target.includes("/") || file.target.startsWith(".");
+      if (looksRootLevel) {
+        fail(
+          `registry: ${item.name} -> target "${file.target}" looks project-root-level ` +
+            `but has no "~/" prefix; it will install under the consumer's src/ instead ` +
+            `of the project root (SETUP.md Part 9)`,
+        );
+      }
+    }
   }
 
   // SETUP.md Part 9: a bare registryDependencies name always resolves against

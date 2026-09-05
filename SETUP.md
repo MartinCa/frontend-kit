@@ -683,12 +683,14 @@ projects, public remains the right trade.
 
 ## Part 9 — Authoring new registry items
 
-Two things that broke on the first attempt, found only by actually running
-`shadcn add` against the real registry. `validate.yml` now catches the first one
+Three things that broke, found only by actually running `shadcn add` against
+real consuming projects. `validate.yml` now catches two of them
 (`scripts/validate-manifests.mjs` rejects a self-referential
-`registryDependencies` entry, and rejects an item whose `.ts`/`.tsx` files
-import a `@/` path the item does not itself ship). The second is still not
-mechanically checkable.
+`registryDependencies` entry, an item whose `.ts`/`.tsx` files import a `@/`
+path the item does not itself ship, and — since the third bug below — a
+`registry:file` target that looks project-root-level but is missing the `~/`
+prefix). Testing a registry change before merging is still not mechanically
+checkable.
 
 **A `registryDependencies` entry cannot point back into this same registry.**
 A bare name in `registryDependencies` (e.g. `["theme-provider"]`) always
@@ -709,6 +711,38 @@ from it).
 `registryDependencies` is fine, and the right tool, for referencing an item
 from the *default* registry (`button`, `dialog`, etc.) — those resolve
 correctly.
+
+**A bare `registry:file` target (`DESIGN.md`, `AGENTS.md`,
+`.claude/skills/.../SKILL.md`) does not install at the project root — it
+installs under the consumer's alias-derived source root instead (usually
+`src/`, resolved from `components.json`'s `utils`/`lib` aliases via
+tsconfig), even though the file itself has no directory component and the
+docs everywhere describe these files as living at the project root.** This
+went unnoticed for a while because it silently "worked": a project whose
+`DESIGN.md`/`AGENTS.md` happened to already live under `src/` (because
+whoever ran `shadcn add` the first time never checked where it landed) saw
+`--overwrite` update the right file. A project whose files were placed at the
+literal root — matching what every doc says — instead got fresh, wrong
+copies written under `src/` on every `--overwrite`, leaving the real
+root-level files silently stale.
+
+Fix: prefix the target with `~/` (`~/DESIGN.md`, `~/AGENTS.md`,
+`~/.claude/skills/frontend-conventions/SKILL.md`) — shadcn's own
+`target`-resolution docs describe `~/` as anchoring to the literal project
+root regardless of aliases. Verified by installing a local registry-item
+JSON (with `content` inlined, not just `path` — a `path`-only local item
+silently resolves nothing) against a project with pre-existing stale
+root-level `DESIGN.md`/`AGENTS.md`: without `~/` the CLI wrote new files
+under `src/`; with it, the existing root files were correctly updated in
+place. `scripts/validate-manifests.mjs` now flags a `registry:file` target
+with no directory component (or a dotfile directory) that's missing the
+`~/` prefix, so this can't quietly reappear in a future item.
+
+If a project already has its `DESIGN.md`/`AGENTS.md` sitting under `src/`
+from before this fix, the next `--overwrite` creates root-level copies
+alongside them rather than reconciling the two — check for and remove the
+stale `src/` copies by hand, and fix any doc that points at the old location
+(a project's own root `AGENTS.md`, a README, etc.).
 
 **There's no clean way to test a registry change against a branch before
 merging.** The `owner/repo/item` GitHub shorthand always reads from the
