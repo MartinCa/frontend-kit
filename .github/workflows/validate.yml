@@ -52,4 +52,4 @@ jobs:
           git commit --no-verify -m "chore: test release [skip ci]"
           npm publish --dry-run --ignore-scripts
         env:
-          HUSKY: "0"
+          LEFTHOOK: "0"
