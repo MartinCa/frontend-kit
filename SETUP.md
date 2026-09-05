@@ -342,7 +342,22 @@ arrives with a pnpm upgrade rather than with any change of yours.
 trustLockfile: true
 minimumReleaseAgeExclude:
   - "@martinrun/*"
+allowBuilds:
+  lefthook: true
 ```
+
+`allowBuilds` is unrelated to the release-age policy above but lives in the same
+file: it approves Lefthook's install script under pnpm's default (pnpm 10+)
+block on dependency lifecycle scripts. Without it, `pnpm install` on a clean
+clone fails outright under pnpm 11+ (`ERR_PNPM_IGNORED_BUILDS`) — and on pnpm
+10 it only warns on `install`, but every later `pnpm <binary>` invocation
+(`pnpm eslint`, `pnpm prettier` — including the ones the Lefthook config below
+runs on every commit) re-triggers pnpm's dependency-status check, which hits
+the same hard error and exits nonzero. That breaks `git commit` itself, not
+just a one-time install warning. Lefthook is a small, single-purpose Go
+binary you already chose to trust by adding it as a dependency, so approving
+its build script here is reasonable — this is not a blanket opt-out, it
+approves that one package by name.
 
 `trustLockfile` stops pnpm re-applying the policy to an already-committed
 lockfile on every install. The policy still runs when the lockfile is
@@ -415,21 +430,19 @@ pre-commit:
 `pnpm install` runs the `prepare` script automatically, which registers the git hook
 (`lefthook install` — safe to re-run, it's idempotent).
 
-**This only works because `prepare` is the project's own script, not lefthook's.**
-Some lefthook guides wire the hook install into lefthook's own bundled
-`postinstall` instead — don't do that here. pnpm 10+ ignores lifecycle scripts
-belonging to *dependencies* by default (`ERR_PNPM_IGNORED_BUILDS` /
-`pnpm approve-builds`), and lefthook's package ships exactly such a script. A
-`pnpm install` in a fresh clone does print `Ignored build scripts:
-lefthook@2.1.12` — that's expected and harmless: lefthook resolves its
-platform binary from an `optionalDependencies` package (no script needed) and
-this kit's own `"prepare": "lefthook install"` line is the project's script,
-which pnpm always runs regardless of that setting. Verified by wiping
-`node_modules` and reinstalling — the pre-commit hook fires correctly despite
-the warning. If a project's `package.json` instead used `"postinstall":
-"lefthook install"` (lefthook's own suggested wiring in its README), the hook
-would silently not install under pnpm 10+ until `lefthook` is added to
-`pnpm.onlyBuiltDependencies`.
+**pnpm users: this needs the `allowBuilds` line in `pnpm-workspace.yaml`
+above, or the hook breaks every commit.** pnpm 10+ ignores install scripts
+belonging to dependencies by default, and Lefthook's package ships one. Under
+pnpm 11+ this makes `pnpm install` itself fail outright
+(`ERR_PNPM_IGNORED_BUILDS`); under pnpm 10 `install` only warns, but that's
+worse, not better — every subsequent `pnpm <binary>` call (`pnpm eslint`,
+`pnpm prettier`) re-runs pnpm's dependency-status check, hits the same error,
+and exits nonzero. Since this kit's `lefthook.yml` (below) runs exactly those
+commands on every commit, an unapproved build means `git commit` fails on
+the very first commit after a fresh `pnpm install` — not a one-time
+inconvenience. Reproduced on pnpm 10.33 and pnpm 11.25; fixed by the
+`allowBuilds: { lefthook: true }` entry, verified against both versions with
+a clean `node_modules`.
 
 **.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
 
