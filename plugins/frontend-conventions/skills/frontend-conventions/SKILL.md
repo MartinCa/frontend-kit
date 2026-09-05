@@ -77,7 +77,8 @@ activates (the app renders light no matter the system preference, and
 nothing errors to tell you why).
 
 Lint, TypeScript, Prettier, and TanStack Query ESLint rules come from `@martinrun/frontend-config`.
-Pre-commit checks run through Husky and `lint-staged`.
+Pre-commit checks run through `lefthook` (replaced Husky + lint-staged — Husky has had
+no release since November 2024).
 All CI pipelines and agent pre-PR validations enforce four checks:
 `pnpm run lint`, `pnpm run format-check`, `tsc --noEmit`, and `pnpm test`.
 

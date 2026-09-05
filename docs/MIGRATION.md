@@ -54,7 +54,7 @@ nobody follows.
 Wire the shared config (see SETUP.md Part 6 for the exact file contents):
 
 ```sh
-pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss husky lint-staged
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss lefthook
 ```
 
 No version typed in — let pnpm resolve current releases rather than writing
@@ -255,8 +255,8 @@ it. In short:
    Fill in DESIGN.md section 9 by asking me what the app is, who uses it,
    the backend, and the pagination convention — do not guess these.
    List every item from step 1 you are not fixing in this pass under "Deviations."
-3. Add @martinrun/frontend-config, husky, and lint-staged as dev dependencies
-   and wire eslint.config.js, prettier.config.js, tsconfig.json, .husky/pre-commit,
+3. Add @martinrun/frontend-config and lefthook as dev dependencies
+   and wire eslint.config.js, prettier.config.js, tsconfig.json, lefthook.yml,
    and package.json scripts (prepare, lint, format-check) to extend them. Ensure
    .gitignore does not ignore src/routeTree.gen.ts (it must be committed for
    type-aware linting). Run the full verification suite (pnpm run lint,
@@ -342,8 +342,8 @@ Execute this migration in two phases:
    Chakra, Bootstrap, etc.), state management patterns, routing, form libraries, and icons.
 2. Install MartinCa/frontend-kit/conventions (writes DESIGN.md, AGENTS.md). Ask me for
    DESIGN.md section 9 answers (app purpose, target users, backend, pagination) before writing.
-3. Add @martinrun/frontend-config, husky, and lint-staged as dev dependencies
-   and wire eslint.config.js, prettier.config.js, tsconfig.json, .husky/pre-commit,
+3. Add @martinrun/frontend-config and lefthook as dev dependencies
+   and wire eslint.config.js, prettier.config.js, tsconfig.json, lefthook.yml,
    and package.json scripts (prepare, lint, format-check). Ensure src/routeTree.gen.ts
    is not gitignored. Always install dependencies using `pnpm add` without typed version numbers.
 4. If components.json does not exist, run `shadcn init` (ask for preset code if not recorded).

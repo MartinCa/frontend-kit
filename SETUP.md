@@ -283,7 +283,7 @@ pnpm dlx shadcn@latest add \
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
-pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss husky lint-staged
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss lefthook
 ```
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
@@ -382,32 +382,38 @@ deliberately warnings (`no-console`, `react-refresh/only-export-components`)
 because they are noisy mid-edit, and `eslint` exits 0 on warnings, so without
 the flag CI stays green while they accumulate.
 
-Add scripts, `"prepare": "husky"`, and `lint-staged` configuration to `package.json`:
+Add scripts to `package.json`:
 
 ```jsonc
 "scripts": {
   "lint": "eslint . --max-warnings 0",
   "format-check": "prettier --check .",
   "format": "prettier --write .",
-  "prepare": "husky"
-},
-"lint-staged": {
-  "*.{ts,tsx}": [
-    "eslint --fix",
-    "prettier --write"
-  ],
-  "*.{json,css,md,js,mjs,html}": [
-    "prettier --write"
-  ]
+  "prepare": "lefthook install"
 }
 ```
 
-Initialize husky pre-commit hook (`.husky/pre-commit`):
+Git hooks run through [Lefthook](https://github.com/evilmartians/lefthook) rather than
+Husky + lint-staged — Husky hasn't shipped a release since November 2024, and Lefthook
+(a single Go binary, no Node process per hook) replaces both packages with one config
+file. Add `lefthook.yml` at the project root:
 
-```sh
-pnpm exec husky init
-echo "pnpm lint-staged" > .husky/pre-commit
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx}"
+      run: pnpm eslint --fix {staged_files} && pnpm prettier --write {staged_files}
+      stage_fixed: true
+    format:
+      glob: "*.{json,css,md,js,mjs,html}"
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
 ```
+
+`pnpm install` runs the `prepare` script automatically, which registers the git hook
+(`lefthook install` — safe to re-run, it's idempotent).
 
 **.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
 
