@@ -283,7 +283,7 @@ pnpm dlx shadcn@latest add \
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react sonner
-pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss husky lint-staged
+pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss lefthook
 ```
 
 Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
@@ -342,7 +342,22 @@ arrives with a pnpm upgrade rather than with any change of yours.
 trustLockfile: true
 minimumReleaseAgeExclude:
   - "@martinrun/*"
+allowBuilds:
+  lefthook: true
 ```
+
+`allowBuilds` is unrelated to the release-age policy above but lives in the same
+file: it approves Lefthook's install script under pnpm's default (pnpm 10+)
+block on dependency lifecycle scripts. Without it, `pnpm install` on a clean
+clone fails outright under pnpm 11+ (`ERR_PNPM_IGNORED_BUILDS`) — and on pnpm
+10 it only warns on `install`, but every later `pnpm <binary>` invocation
+(`pnpm eslint`, `pnpm prettier` — including the ones the Lefthook config below
+runs on every commit) re-triggers pnpm's dependency-status check, which hits
+the same hard error and exits nonzero. That breaks `git commit` itself, not
+just a one-time install warning. Lefthook is a small, single-purpose Go
+binary you already chose to trust by adding it as a dependency, so approving
+its build script here is reasonable — this is not a blanket opt-out, it
+approves that one package by name.
 
 `trustLockfile` stops pnpm re-applying the policy to an already-committed
 lockfile on every install. The policy still runs when the lockfile is
@@ -382,32 +397,52 @@ deliberately warnings (`no-console`, `react-refresh/only-export-components`)
 because they are noisy mid-edit, and `eslint` exits 0 on warnings, so without
 the flag CI stays green while they accumulate.
 
-Add scripts, `"prepare": "husky"`, and `lint-staged` configuration to `package.json`:
+Add scripts to `package.json`:
 
 ```jsonc
 "scripts": {
   "lint": "eslint . --max-warnings 0",
   "format-check": "prettier --check .",
   "format": "prettier --write .",
-  "prepare": "husky"
-},
-"lint-staged": {
-  "*.{ts,tsx}": [
-    "eslint --fix",
-    "prettier --write"
-  ],
-  "*.{json,css,md,js,mjs,html}": [
-    "prettier --write"
-  ]
+  "prepare": "lefthook install"
 }
 ```
 
-Initialize husky pre-commit hook (`.husky/pre-commit`):
+Git hooks run through [Lefthook](https://github.com/evilmartians/lefthook) rather than
+Husky + lint-staged — Husky hasn't shipped a release since November 2024, and Lefthook
+(a single Go binary, no Node process per hook) replaces both packages with one config
+file. Add `lefthook.yml` at the project root:
 
-```sh
-pnpm exec husky init
-echo "pnpm lint-staged" > .husky/pre-commit
+```yaml
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx}"
+      run: pnpm eslint --fix {staged_files} && pnpm prettier --write {staged_files}
+      stage_fixed: true
+    format:
+      glob: "*.{json,css,md,js,mjs,html}"
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
 ```
+
+`pnpm install` runs the `prepare` script automatically, which registers the git hook
+(`lefthook install` — safe to re-run, it's idempotent).
+
+**pnpm users: this needs the `allowBuilds` line in `pnpm-workspace.yaml`
+above, or the hook breaks every commit.** pnpm 10+ ignores install scripts
+belonging to dependencies by default, and Lefthook's package ships one. Under
+pnpm 11+ this makes `pnpm install` itself fail outright
+(`ERR_PNPM_IGNORED_BUILDS`); under pnpm 10 `install` only warns, but that's
+worse, not better — every subsequent `pnpm <binary>` call (`pnpm eslint`,
+`pnpm prettier`) re-runs pnpm's dependency-status check, hits the same error,
+and exits nonzero. Since this kit's `lefthook.yml` (below) runs exactly those
+commands on every commit, an unapproved build means `git commit` fails on
+the very first commit after a fresh `pnpm install` — not a one-time
+inconvenience. Reproduced on pnpm 10.33 and pnpm 11.25; fixed by the
+`allowBuilds: { lefthook: true }` entry, verified against both versions with
+a clean `node_modules`.
 
 **.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
 

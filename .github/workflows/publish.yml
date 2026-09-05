@@ -101,7 +101,7 @@ jobs:
             git push origin "HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}"
           fi
         env:
-          HUSKY: "0"
+          LEFTHOOK: "0"
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
           GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
