@@ -415,6 +415,22 @@ pre-commit:
 `pnpm install` runs the `prepare` script automatically, which registers the git hook
 (`lefthook install` — safe to re-run, it's idempotent).
 
+**This only works because `prepare` is the project's own script, not lefthook's.**
+Some lefthook guides wire the hook install into lefthook's own bundled
+`postinstall` instead — don't do that here. pnpm 10+ ignores lifecycle scripts
+belonging to *dependencies* by default (`ERR_PNPM_IGNORED_BUILDS` /
+`pnpm approve-builds`), and lefthook's package ships exactly such a script. A
+`pnpm install` in a fresh clone does print `Ignored build scripts:
+lefthook@2.1.12` — that's expected and harmless: lefthook resolves its
+platform binary from an `optionalDependencies` package (no script needed) and
+this kit's own `"prepare": "lefthook install"` line is the project's script,
+which pnpm always runs regardless of that setting. Verified by wiping
+`node_modules` and reinstalling — the pre-commit hook fires correctly despite
+the warning. If a project's `package.json` instead used `"postinstall":
+"lefthook install"` (lefthook's own suggested wiring in its README), the hook
+would silently not install under pnpm 10+ until `lefthook` is added to
+`pnpm.onlyBuiltDependencies`.
+
 **.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
 
 ```yaml

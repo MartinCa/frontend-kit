@@ -61,11 +61,13 @@ never hand-edited (DESIGN.md section 3) — if that invariant has been broken,
 expect a real merge instead of a clean overwrite, and fix the invariant while
 you're in there.
 
-**`clsx`/`tailwind-merge` → `cn`.** shadcn now ships its own class-merging engine
-(`cn`, ~30x faster, same API as `twMerge(clsx(...))`) and added `npx shadcn migrate cn`
-to adopt it in Tailwind v4 projects. Make sure the shadcn CLI itself is current first —
-`pnpm dlx shadcn@latest` always resolves the latest release, so there's nothing to bump
-by hand — then run the migration once per project:
+**`clsx`/`tailwind-merge` → `cn`.** Only relevant for a project that already has
+`clsx`/`tailwind-merge` in `lib/utils.ts` — a fresh `shadcn init` scaffold already
+generates against `cn` and has nothing to migrate. shadcn now ships its own
+class-merging engine (`cn`, ~30x faster, same API as `twMerge(clsx(...))`) and added
+`npx shadcn migrate cn` to adopt it in Tailwind v4 projects. Make sure the shadcn CLI
+itself is current first — `pnpm dlx shadcn@latest` always resolves the latest release,
+so there's nothing to bump by hand — then run the migration once per project:
 
 ```sh
 pnpm dlx shadcn@latest migrate cn

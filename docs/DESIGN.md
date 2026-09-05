@@ -40,8 +40,11 @@ Router, `src/routeTree.gen.ts` is committed to Git as a vendored contract (see S
 
 Anything in the table above, plus: `cn` (shadcn's Tailwind class-merging engine — a
 drop-in replacement for `clsx` + `tailwind-merge`, installed via `npx shadcn migrate cn`
-on Tailwind v4 projects; new `shadcn init` scaffolds already use it), `class-variance-authority`
-(these come with shadcn), `sonner` for toasts, `cmdk` for command palettes.
+on Tailwind v4 projects; new `shadcn init` scaffolds already use it — the migration
+command is a no-op if the project doesn't already have `clsx`/`tailwind-merge` in
+`lib/utils.ts`, so don't go looking for something to run on a fresh project),
+`class-variance-authority` (these come with shadcn), `sonner` for toasts, `cmdk` for
+command palettes.
 
 Everything else requires a one-line justification in the PR description. Prefer writing
 30 lines over adding a dependency for something small. Prefer a dependency over writing
