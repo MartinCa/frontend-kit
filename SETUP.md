@@ -444,6 +444,35 @@ inconvenience. Reproduced on pnpm 10.33 and pnpm 11.25; fixed by the
 `allowBuilds: { lefthook: true }` entry, verified against both versions with
 a clean `node_modules`.
 
+**If the project builds a frontend stage in Docker, that `pnpm install` needs
+`--ignore-scripts`.** A typical multi-stage Dockerfile copies only
+`package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` into the frontend build
+stage — never `.git` — and the base Node image (`node:*-slim`, `node:*-alpine`)
+usually has no `git` binary either. Lefthook's `prepare` script shells out to
+`git rev-parse` to find the repo root, and fails outright in that stage:
+
+```
+. prepare$ lefthook install
+. prepare: Error: exec: "git": executable file not found in $PATH
+[ELIFECYCLE] Command failed with exit code 1.
+```
+
+This is unrelated to the `allowBuilds` fix above — `allowBuilds` only gets
+lefthook's own install script permitted to run at all; it still runs `git`
+once permitted. The Docker build stage never needs any package's install
+script to produce a build (it just needs the packages on disk for `pnpm
+build`), so skip them all:
+
+```dockerfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
+```
+
+Verified by installing with `git` removed from `PATH` entirely: fails without
+`--ignore-scripts`, succeeds with it. This only affects Docker (or any other
+build step run against a working tree with no `.git` and no `git` binary) —
+a normal CI job on a GitHub Actions runner has both, so `pnpm run lint` /
+`pnpm test` steps elsewhere in the same workflow don't need this flag.
+
 **.github/workflows/ci.yml** — Template GitHub Actions workflow verifying every PR and branch push:
 
 ```yaml
