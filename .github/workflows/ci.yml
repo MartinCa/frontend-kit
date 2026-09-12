@@ -1,4 +1,4 @@
-name: Validate
+name: CI
 
 on:
   # Bare `on: push` plus `on: pull_request` runs this twice for every PR
@@ -7,12 +7,50 @@ on:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.12.3"
 
 jobs:
-  validate:
+  lint:
+    name: Lint and format
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # npm, not pnpm, only for this repo's own CI: the package has no build
+      # step and npm is what ships with the runner. Consuming projects use pnpm
+      # as the docs describe. `ci` rather than `install` so a bad range in
+      # package.json fails here instead of resolving to something else.
+      - run: npm ci
+
+      - name: Code and config are formatted
+        run: npm run format:check
+
+      # Asserts that the shared config's rules actually fire against real
+      # fixtures. Checking that `config()` returns an array is also true of a
+      # config whose rules never match anything.
+      - name: Shared ESLint config behaves
+        run: npm test
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -31,15 +69,6 @@ jobs:
       - name: Manifests are structurally sound
         run: node scripts/validate-manifests.mjs
 
-      - name: Code and config are formatted
-        run: npm run format:check
-
-      # Asserts that the shared config's rules actually fire against real
-      # fixtures. Checking that `config()` returns an array is also true of a
-      # config whose rules never match anything.
-      - name: Shared ESLint config behaves
-        run: npm test
-
       # Simulates the release publishing flow (version bump, commit with no-verify,
       # and dry-run pack/publish) to catch release workflow breakages on PRs
       # before tags are created.
@@ -53,3 +82,30 @@ jobs:
           npm publish --dry-run --ignore-scripts
         env:
           LEFTHOOK: "0"
+
+  zizmor:
+    name: Zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload zizmor's SARIF report to code scanning
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Audit workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uvx zizmor@1.29.0 --format sarif . > zizmor.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          sarif_file: zizmor.sarif
+          category: zizmor

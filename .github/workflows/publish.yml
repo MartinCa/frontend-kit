@@ -37,7 +37,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-          cache: npm
+          # No npm cache on release-triggered runs: a poisoned cache would
+          # feed the published artifact, and a rare release gains little
+          # from caching anyway (zizmor: cache-poisoning).
+          package-manager-cache: false
 
       - run: npm ci
 
