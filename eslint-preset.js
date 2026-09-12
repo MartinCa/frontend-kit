@@ -153,10 +153,8 @@ export default function config({ ignores = [] } = {}) {
     // switch the type-aware parser off), so it has to be spread *before* ours —
     // spreading it after replaces the whole key and silently drops the Node
     // globals, which shows up as no-undef on `process` in a .js config file.
-    // eslint-preset.js is exactly such a file even though its name does not end
-    // in `.config.js`, hence the explicit second pattern.
     {
-      files: ["*.config.{js,ts}", "eslint-preset.js"],
+      files: ["*.config.{js,ts}"],
       ...tseslint.configs.disableTypeChecked,
       languageOptions: {
         ...tseslint.configs.disableTypeChecked.languageOptions,

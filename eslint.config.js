@@ -31,6 +31,21 @@ export default [
     files: ["src/**/*.{ts,tsx}"],
     ...tseslint.configs.disableTypeChecked,
   },
+  // `eslint-preset.js` is the shared factory this file calls: it runs in Node
+  // (`process.cwd()`) and is not part of an app project, same as any
+  // `*.config.js`. Its name does not match the preset's Node glob — and
+  // deliberately so: that glob is part of the shared factory, and naming the
+  // factory file in it would leak Node globals into every consumer that keeps
+  // their own `eslint-preset.js`. The exemption therefore lives here,
+  // repo-locally.
+  {
+    files: ["eslint-preset.js"],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      globals: globals.node,
+    },
+  },
   // Node-run scripts and test harnesses are neither `*.config.js` (which the
   // preset's Node-glob covers) nor part of a tsconfig project — drop the
   // type-aware parser for them the same way the preset does for config files,
