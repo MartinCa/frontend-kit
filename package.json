@@ -26,7 +26,6 @@
   },
   "files": [
     "eslint-preset.js",
-    "eslint.config.js",
     "prettier.config.js",
     "tsconfig.base.json",
     "LICENSE"

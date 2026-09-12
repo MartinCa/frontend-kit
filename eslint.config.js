@@ -31,6 +31,9 @@ export default [
     files: ["src/**/*.{ts,tsx}"],
     ...tseslint.configs.disableTypeChecked,
   },
+  // If new top-level .ts/.tsx files land outside src/ (e.g. scripts/*.ts), add
+  // them to tsconfig.json's `include` or to this scope, or the pre-commit lint
+  // fails with a project-service parsing error (see tsconfig.json).
   // `eslint-preset.js` is the shared factory this file calls: it runs in Node
   // (`process.cwd()`) and is not part of an app project, same as any
   // `*.config.js`. Its name does not match the preset's Node glob — and

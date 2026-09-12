@@ -433,7 +433,8 @@ remotes:
   `npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}`.
 - `lefthook-shared.yml` — secret-scans the staged diff with `betterleaks` (blocks on a
   leak) and audits staged workflow files with `zizmor` (blocks on a finding). Both tools
-  must be on `PATH`.
+  must be on `PATH`: `betterleaks` (install per its project README) and `zizmor` (install
+  from zizmor.sh) — same pointers as the AGENTS.md Git hooks section.
 - `commit-msg.yml` — Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
 
 `lefthook run pre-commit` / `lefthook run commit-msg` verify the merged hooks;
