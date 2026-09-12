@@ -1,0 +1,8 @@
+pre-commit:
+  commands:
+    lint:
+      run: npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}
+      exclude: ["test/fixtures/**"]
+    format:
+      run: npx --no-install prettier --write {staged_files}
+      exclude: ["test/fixtures/**"]

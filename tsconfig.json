@@ -1,0 +1,12 @@
+{
+  // This project exists for editors/tsserver only: ESLint's type-checked rules
+  // do not execute outside the `npm test` fixtures (see eslint.config.js), so
+  // nothing else consumes this file.
+  //
+  // Only src/** is included. Any new top-level .ts/.tsx outside src (e.g.
+  // scripts/*.ts) must be added to `include` here — or to the
+  // disableTypeChecked scope in eslint.config.js — or the pre-commit lint
+  // fails with a "file not found by the project service" parsing error.
+  "extends": "./tsconfig.base.json",
+  "include": ["src/**/*"]
+}

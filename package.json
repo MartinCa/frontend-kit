@@ -20,12 +20,12 @@
     "prepare": "lefthook install"
   },
   "exports": {
-    "./eslint": "./eslint.config.js",
+    "./eslint": "./eslint-preset.js",
     "./prettier": "./prettier.config.js",
     "./tsconfig": "./tsconfig.base.json"
   },
   "files": [
-    "eslint.config.js",
+    "eslint-preset.js",
     "prettier.config.js",
     "tsconfig.base.json",
     "LICENSE"
