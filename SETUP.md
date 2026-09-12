@@ -411,21 +411,30 @@ Add scripts to `package.json`:
 Git hooks run through [Lefthook](https://github.com/evilmartians/lefthook) rather than
 Husky + lint-staged — Husky hasn't shipped a release since November 2024, and Lefthook
 (a single Go binary, no Node process per hook) replaces both packages with one config
-file. Add `lefthook.yml` at the project root:
+file. Add `lefthook.yml` at the project root — a thin consumer config pointing at the
+shared fragments (`MartinCa/lefthook-configs`, `ref:` pinned to a released tag, never
+a branch, so hook behavior is reproducible):
 
 ```yaml
-pre-commit:
-  parallel: true
-  commands:
-    lint:
-      glob: "*.{ts,tsx}"
-      run: pnpm eslint --fix {staged_files} && pnpm prettier --write {staged_files}
-      stage_fixed: true
-    format:
-      glob: "*.{json,css,md,js,mjs,html}"
-      run: pnpm prettier --write {staged_files}
-      stage_fixed: true
+remotes:
+  - git_url: https://github.com/MartinCa/lefthook-configs
+    ref: v1.0.0
+    configs:
+      - lefthook-shared.yml
+      - langs/ts.yml
+      - commit-msg.yml
 ```
+
+- `langs/ts.yml` — ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on
+  JSON/CSS/MD, re-staging fixed files (`stage_fixed`).
+- `lefthook-shared.yml` — secret-scans the staged diff with `betterleaks` (blocks on a
+  leak) and audits staged workflow files with `zizmor` (blocks on a finding). Both tools
+  must be on `PATH`.
+- `commit-msg.yml` — Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
+
+`lefthook run pre-commit` / `lefthook run commit-msg` verify the merged hooks.
+`lefthook validate` only inspects the local file and reports remote commands as
+"missing `run`" — expected; run the hooks to verify merged behavior.
 
 `pnpm install` runs the `prepare` script automatically, which registers the git hook
 (`lefthook install` — safe to re-run, it's idempotent).

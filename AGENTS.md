@@ -26,6 +26,15 @@ If any files need formatting:
 npm run format                    # prettier --write .
 ```
 
+## Git hooks
+
+Local hooks are installed automatically by `pnpm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run). They are fast-feedback convenience checks; CI remains the authoritative gate, so still run the mandatory verification above before opening a PR.
+
+Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v1.0.0` in `lefthook.yml`:
+
+- **pre-commit** — `langs/ts.yml` runs ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on JSON/CSS/MD, re-staging fixed files; `lefthook-shared.yml` secret-scans the staged diff with `betterleaks` (blocks the commit on a leak) and audits staged `.github/workflows/*` files with `zizmor` (blocks on a finding).
+- **commit-msg** — `commit-msg.yml` enforces Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
+
 ## Important House Rules for this Repo
 
 - **Do NOT hand-edit `version` in `package.json`**: The npm package version is managed automatically by the `.github/workflows/publish.yml` release workflow upon creating a GitHub Release tag (`vX.Y.Z`). `package.json`'s version reflects the last published release.
