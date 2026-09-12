@@ -117,4 +117,3 @@ jobs:
       # first version had to be published manually with a token. See Part 2 of
       # SETUP.md.
       - run: npm publish --ignore-scripts
-
