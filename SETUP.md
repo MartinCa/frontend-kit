@@ -426,15 +426,23 @@ remotes:
 ```
 
 - `langs/ts.yml` — ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on
-  JSON/CSS/MD, re-staging fixed files (`stage_fixed`).
+  JSON/CSS/MD, re-staging fixed files (`stage_fixed`). The fragment runs `pnpm eslint` /
+  `pnpm prettier`; npm-based consumers override those commands in `lefthook-local.yml`,
+  the one config layer that merges *over* `remotes:` (matching command keys deep-merge,
+  keeping the fragment's `glob`/`stage_fixed`), e.g.
+  `npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}`.
 - `lefthook-shared.yml` — secret-scans the staged diff with `betterleaks` (blocks on a
   leak) and audits staged workflow files with `zizmor` (blocks on a finding). Both tools
   must be on `PATH`.
 - `commit-msg.yml` — Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
 
-`lefthook run pre-commit` / `lefthook run commit-msg` verify the merged hooks.
-`lefthook validate` only inspects the local file and reports remote commands as
-"missing `run`" — expected; run the hooks to verify merged behavior.
+`lefthook run pre-commit` / `lefthook run commit-msg` verify the merged hooks;
+`lefthook dump` prints the effective config with `remotes:` merged in.
+
+Set `LEFTHOOK=0` to make the installed hooks no-op — handy for scripts,
+restricted/offline environments, or CI images that must not shell out to the
+hook tooling. (Equivalent to `git commit --no-verify` without needing flags on
+every call.)
 
 `pnpm install` runs the `prepare` script automatically, which registers the git hook
 (`lefthook install` — safe to re-run, it's idempotent).

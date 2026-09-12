@@ -28,12 +28,14 @@ npm run format                    # prettier --write .
 
 ## Git hooks
 
-Local hooks are installed automatically by `pnpm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run). They are fast-feedback convenience checks; CI remains the authoritative gate, so still run the mandatory verification above before opening a PR.
+Local hooks are installed automatically by `npm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run).
 
-Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v1.0.0` in `lefthook.yml`:
+Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v1.0.0` in `lefthook.yml`. `remotes:` configs merge *over* `lefthook.yml`, so this repo's npm adaptation lives in `lefthook-local.yml` (the one layer that overrides remotes): it swaps the shared `pnpm eslint`/`pnpm prettier` invocations for `npx --no-install`.
 
-- **pre-commit** — `langs/ts.yml` runs ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on JSON/CSS/MD, re-staging fixed files; `lefthook-shared.yml` secret-scans the staged diff with `betterleaks` (blocks the commit on a leak) and audits staged `.github/workflows/*` files with `zizmor` (blocks on a finding).
+- **pre-commit** — lint/format via ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on JSON/CSS/MD, re-staging fixed files; `lefthook-shared.yml` secret-scans the staged diff with `betterleaks` (blocks the commit on a leak) and audits staged `.github/workflows/*` files with `zizmor` (blocks on a finding).
 - **commit-msg** — `commit-msg.yml` enforces Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
+
+These hooks are currently the **only** enforcement of the lint/format, secret-scan, and Conventional-Commits checks: CI runs format-check, tests, and manifest validation, and uploads a zizmor SARIF report to code scanning — it does not run `eslint`, `betterleaks`, or commit-msg validation themselves (and zizmor in CI is a non-blocking SARIF upload, not a merge gate). Do not bypass the hooks. The mandatory verification above still guards what the hooks skip — `format-check` verifies the whole tree and `npm test` exercises the shared config.
 
 ## Important House Rules for this Repo
 
