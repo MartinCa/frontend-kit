@@ -411,21 +411,38 @@ Add scripts to `package.json`:
 Git hooks run through [Lefthook](https://github.com/evilmartians/lefthook) rather than
 Husky + lint-staged — Husky hasn't shipped a release since November 2024, and Lefthook
 (a single Go binary, no Node process per hook) replaces both packages with one config
-file. Add `lefthook.yml` at the project root:
+file. Add `lefthook.yml` at the project root — a thin consumer config pointing at the
+shared fragments (`MartinCa/lefthook-configs`, `ref:` pinned to a released tag, never
+a branch, so hook behavior is reproducible):
 
 ```yaml
-pre-commit:
-  parallel: true
-  commands:
-    lint:
-      glob: "*.{ts,tsx}"
-      run: pnpm eslint --fix {staged_files} && pnpm prettier --write {staged_files}
-      stage_fixed: true
-    format:
-      glob: "*.{json,css,md,js,mjs,html}"
-      run: pnpm prettier --write {staged_files}
-      stage_fixed: true
+remotes:
+  - git_url: https://github.com/MartinCa/lefthook-configs
+    ref: v1.0.0
+    configs:
+      - lefthook-shared.yml
+      - langs/ts.yml
+      - commit-msg.yml
 ```
+
+- `langs/ts.yml` — ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on
+  JSON/CSS/MD, re-staging fixed files (`stage_fixed`). The fragment runs `pnpm eslint` /
+  `pnpm prettier`; npm-based consumers override those commands in `lefthook-local.yml`,
+  the one config layer that merges *over* `remotes:` (matching command keys deep-merge,
+  keeping the fragment's `glob`/`stage_fixed`), e.g.
+  `npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}`.
+- `lefthook-shared.yml` — secret-scans the staged diff with `betterleaks` (blocks on a
+  leak) and audits staged workflow files with `zizmor` (blocks on a finding). Both tools
+  must be on `PATH`.
+- `commit-msg.yml` — Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
+
+`lefthook run pre-commit` / `lefthook run commit-msg` verify the merged hooks;
+`lefthook dump` prints the effective config with `remotes:` merged in.
+
+Set `LEFTHOOK=0` to make the installed hooks no-op — handy for scripts,
+restricted/offline environments, or CI images that must not shell out to the
+hook tooling. (Equivalent to `git commit --no-verify` without needing flags on
+every call.)
 
 `pnpm install` runs the `prepare` script automatically, which registers the git hook
 (`lefthook install` — safe to re-run, it's idempotent).
