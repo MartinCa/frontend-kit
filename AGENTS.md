@@ -15,34 +15,34 @@ Instructions for AI agents working in the `MartinCa/frontend-kit` repository.
 AI agents operating in ephemeral containers or cloud VMs must run all validation checks explicitly:
 
 ```sh
-npm run format-check              # prettier --check .
-npm test                          # node test runner executing test/eslint-config.test.mjs
+pnpm format:check                  # prettier --check .
+pnpm test                          # node test runner executing test/eslint-config.test.mjs
 node scripts/validate-manifests.mjs # checks registry.json, plugin manifests, and skill frontmatter
 ```
 
 If any files need formatting:
 
 ```sh
-npm run format                    # prettier --write .
+pnpm format                        # prettier --write .
 ```
 
 ## Git hooks
 
-Local hooks are installed automatically by `npm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run).
+Local hooks are installed automatically by `pnpm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run).
 
 **AI agents**: do not install the lefthook binary yourself — it is included in the OpenCode image. If `lefthook` is not on PATH, report this to the user and ask whether to install it.
 
-Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v2.1.0` in `lefthook.yml`. `remotes:` configs merge *over* `lefthook.yml`, so this repo's npm adaptation lives in `lefthook-local.yml` (the one layer that overrides remotes): it swaps the shared `pnpm eslint`/`pnpm prettier` invocations for `npx --no-install` and the shared `pnpm test` (pre-push) for `npm test`.
+Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v2.1.0` in `lefthook.yml`. `remotes:` configs merge *over* `lefthook.yml`, so this repo's explicit override lives in `lefthook-local.yml` (the one layer that overrides remotes): it pins the clone-local binaries via `pnpm exec` (the pnpm equivalent of the `npx --no-install` form used before this repo was on pnpm) and excludes `test/fixtures/**` from the pre-commit lint so deliberate rule-violation samples are never auto-fixed.
 
 - **pre-commit** — lint/format via ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on JSON/CSS/MD, re-staging fixed files; `lefthook-shared.yml` secret-scans the staged diff with `betterleaks` (blocks the commit on a leak) and audits staged `.github/workflows/*` files with `zizmor` (blocks on a finding).
-- **pre-push** — `test-ts` runs `npm test` (`node --test` across `test/**/*.test.mjs`) on every push; a failing suite blocks the push.
+- **pre-push** — `test-ts` runs `pnpm test` (`node --test` across `test/**/*.test.mjs`) on every push; a failing suite blocks the push.
 - **commit-msg** — `commit-msg.yml` enforces Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
 
-These hooks are currently the **only** enforcement of the lint/format, secret-scan, and Conventional-Commits checks: CI runs format-check, tests, and manifest validation, and uploads a zizmor SARIF report to code scanning — it does not run `eslint`, `betterleaks`, or commit-msg validation themselves (and zizmor in CI is a non-blocking SARIF upload, not a merge gate). Do not bypass the hooks. The mandatory verification above still guards what the hooks skip — `format-check` verifies the whole tree and `npm test` exercises the shared config.
+These hooks are currently the **only** enforcement of the lint/format, secret-scan, and Conventional-Commits checks: CI runs format-check, tests, and manifest validation, and uploads a zizmor SARIF report to code scanning — it does not run `eslint`, `betterleaks`, or commit-msg validation themselves (and zizmor in CI is a non-blocking SARIF upload, not a merge gate). Do not bypass the hooks. The mandatory verification above still guards what the hooks skip — `format-check` verifies the whole tree and `pnpm test` exercises the shared config.
 
 Two hook tools must be on `PATH`: `betterleaks` (secret scan, install per its project README) and `zizmor` (workflow audit, install from zizmor.sh). If a tool is missing, `LEFTHOOK=0 git commit` skips the hooks entirely — a pragmatic escape hatch for restricted setups, not a way to dodge the gates (see the SETUP.md hooks section for the same note and details).
 
-`lefthook-local.yml` is **intentionally checked in** as this repo's team-wide override: in a stock lefthook setup that file is the personal, gitignored override layer, but here it is the one layer that merges *over* the shared `remotes:` fragments, and it carries the repo-wide npm adaptation (working around the pnpm assumption in the shared TS fragment — see https://github.com/MartinCa/lefthook-configs/issues/1). It is not a personal override layer in this repo; do not use it for private changes.
+`lefthook-local.yml` is **intentionally checked in** as this repo's team-wide override: in a stock lefthook setup that file is the personal, gitignored override layer, but here it is the one layer that merges *over* the shared `remotes:` fragments. This repo used to be the npm exception in a pnpm ecosystem and the override carried that adaptation (see https://github.com/MartinCa/lefthook-configs/issues/1); since the pnpm migration it pins the same commands through `pnpm exec` and keeps the fixture `exclude` that the shared fragment cannot express. It is not a personal override layer in this repo; do not use it for private changes.
 
 ## Important House Rules for this Repo
 

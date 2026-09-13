@@ -1,12 +1,12 @@
 pre-commit:
   commands:
     lint-ts:
-      run: npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}
+      run: pnpm exec eslint --fix {staged_files} && pnpm exec prettier --write {staged_files}
       exclude: ["test/fixtures/**"]
     format-ts:
-      run: npx --no-install prettier --write {staged_files}
+      run: pnpm exec prettier --write {staged_files}
       exclude: ["test/fixtures/**"]
 pre-push:
   commands:
     test-ts:
-      run: npm test
+      run: pnpm test
