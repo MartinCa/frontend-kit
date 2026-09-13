@@ -30,7 +30,7 @@ npm run format                    # prettier --write .
 
 Local hooks are installed automatically by `npm install` (the `prepare` script runs `lefthook install` — idempotent, safe to re-run).
 
-Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v1.0.0` in `lefthook.yml`. `remotes:` configs merge *over* `lefthook.yml`, so this repo's npm adaptation lives in `lefthook-local.yml` (the one layer that overrides remotes): it swaps the shared `pnpm eslint`/`pnpm prettier` invocations for `npx --no-install`.
+Hooks come from the shared `MartinCa/lefthook-configs` fragments pinned at `v2.0.0` in `lefthook.yml`. `remotes:` configs merge *over* `lefthook.yml`, so this repo's npm adaptation lives in `lefthook-local.yml` (the one layer that overrides remotes): it swaps the shared `pnpm eslint`/`pnpm prettier` invocations for `npx --no-install`.
 
 - **pre-commit** — lint/format via ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on JSON/CSS/MD, re-staging fixed files; `lefthook-shared.yml` secret-scans the staged diff with `betterleaks` (blocks the commit on a leak) and audits staged `.github/workflows/*` files with `zizmor` (blocks on a finding).
 - **commit-msg** — `commit-msg.yml` enforces Conventional Commits, e.g. `feat: ...`, `fix(api): ...`.
