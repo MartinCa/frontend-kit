@@ -6,3 +6,7 @@ pre-commit:
     format-ts:
       run: npx --no-install prettier --write {staged_files}
       exclude: ["test/fixtures/**"]
+pre-push:
+  commands:
+    test-ts:
+      run: npm test

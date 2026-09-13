@@ -418,7 +418,7 @@ a branch, so hook behavior is reproducible):
 ```yaml
 remotes:
   - git_url: https://github.com/MartinCa/lefthook-configs
-    ref: v2.0.1
+    ref: v2.1.0
     configs:
       - lefthook-shared.yml
       - langs/ts.yml
