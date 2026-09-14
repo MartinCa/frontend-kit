@@ -1,6 +1,6 @@
 {
   // This project exists for editors/tsserver only: ESLint's type-checked rules
-  // do not execute outside the `npm test` fixtures (see eslint.config.js), so
+  // do not execute outside the `pnpm test` fixtures (see eslint.config.js), so
   // nothing else consumes this file.
   //
   // Only src/** is included. Any new top-level .ts/.tsx outside src (e.g.

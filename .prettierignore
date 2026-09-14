@@ -1,4 +1,6 @@
-package-lock.json
+# Generated lockfiles are rewritten wholesale by the package manager; formatting
+# them would fight every `pnpm install` and make lockfile diffs noise.
+pnpm-lock.yaml
 
 # Prose is hand-wrapped and the tables are hand-aligned to stay readable in a
 # diff. Prettier repads every table cell to the widest column, which is a large

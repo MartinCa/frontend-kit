@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: write # the version-bump commit pushed below
-  id-token: write # mints the short-lived OIDC credential npm publishes with
+  id-token: write # mints the short-lived OIDC credential the workflow publishes with
 
 jobs:
   publish:
@@ -29,33 +29,44 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      # Deliberately no `registry-url`/`scope`: with registry-url set and no
+      # Deliberately no `registry-url`/`scope`: with those set and no
       # NODE_AUTH_TOKEN, setup-node writes an empty `_authToken=` line into
-      # .npmrc, npm decides auth is already configured, skips the OIDC exchange
-      # and fails with ENEEDAUTH or a 404 (actions/setup-node#1551).
-      # registry.npmjs.org is npm's default, so there is nothing to point at.
+      # .npmrc. Under npm that disables OIDC entirely — npm concludes auth is
+      # already configured, skips the exchange, and fails with ENEEDAUTH or a
+      # 404 (actions/setup-node#1551). pnpm's native publish does not share
+      # that failure mode: it runs the OIDC exchange first and it takes
+      # precedence over any configured static token, and an unresolved
+      # `${NODE_AUTH_TOKEN}` placeholder resolves to "" instead of being sent
+      # literally (pnpm#11513). registry.npmjs.org is the default anyway, so
+      # there is still nothing to point at — omitting the option also keeps an
+      # empty fallback credential from hiding a genuine auth error if the
+      # exchange does fail.
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-          # No npm cache on release-triggered runs: a poisoned cache would
+          # No pnpm store cache on release-triggered runs: a poisoned cache would
           # feed the published artifact, and a rare release gains little
           # from caching anyway (zizmor: cache-poisoning).
           package-manager-cache: false
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      # Trusted publishing needs npm 11.5.1+. Node 24 ships a new enough npm,
-      # but a runner image change would otherwise surface as an auth error
-      # rather than a version problem.
-      - name: npm is new enough for trusted publishing
+      # Trusted publishing (OIDC) is implemented natively in pnpm since v11
+      # (`pnpm publish` no longer delegates to npm). The version is pinned via
+      # package.json's `packageManager` field and installed by pnpm/action-setup
+      # above, so this guard only protects against that pin regressing below the
+      # line that can run the OIDC exchange itself — a runner image change would
+      # otherwise surface as an auth error rather than a version problem.
+      - name: pnpm is new enough for trusted publishing
         run: |
-          required=11.5.1
-          actual="$(npm --version)"
+          required=11.0.0
+          actual="$(pnpm --version)"
           if [ "$(printf '%s\n%s\n' "$required" "$actual" | sort -V | head -n1)" != "$required" ]; then
-            echo "npm $actual is older than $required; trusted publishing will not work." >&2
+            echo "pnpm $actual is older than $required; trusted publishing will not work." >&2
             exit 1
           fi
-          echo "npm $actual"
+          echo "pnpm $actual"
 
       # What gets published is the default branch, not the tagged commit, because
       # the bump commit below has to land on a branch. That is only correct when
@@ -97,7 +108,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version "${STEPS_VERSION_OUTPUTS_VERSION}" --no-git-tag-version --allow-same-version
+          pnpm version "${STEPS_VERSION_OUTPUTS_VERSION}" --no-git-tag-version --allow-same-version
           if ! git diff --quiet -- package.json; then
             git add package.json
             git commit --no-verify -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
@@ -108,12 +119,13 @@ jobs:
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
           GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
-      # No token: npm exchanges the Actions OIDC token for a short-lived,
-      # workflow-scoped credential. Provenance is attested automatically under
-      # trusted publishing, so --provenance is not needed either.
+      # No token: pnpm exchanges the Actions OIDC token for a short-lived,
+      # workflow-scoped credential via the npm registry's OIDC endpoint.
+      # Provenance is attached automatically when OIDC is used and the
+      # repository is public, so --provenance is not needed either.
       #
       # This only works once a trusted publisher is configured for the package
       # at npmjs.com, and that cannot be done before the package exists — the
       # first version had to be published manually with a token. See Part 2 of
       # SETUP.md.
-      - run: npm publish --ignore-scripts
+      - run: pnpm publish --ignore-scripts

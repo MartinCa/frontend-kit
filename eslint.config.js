@@ -16,7 +16,7 @@ import config from "./eslint-preset.js";
 export default [
   ...config({
     // test/fixtures/** are deliberate rule-violation samples; the mandatory
-    // `npm test` lints them through the fixture config (see
+    // `pnpm test` lints them through the fixture config (see
     // test/fixtures/eslint.config.js), so the repo-wide lint has to skip them.
     ignores: ["test/fixtures/**"],
   }),
@@ -24,7 +24,7 @@ export default [
   // need a resolvable app project, and this conventions repo is not one: its
   // src/ imports consumer-only packages (`@tanstack/react-query`, lucide-react,
   // `@/components/ui/button`) that are not installed here and are resolved in
-  // *consuming* projects instead. The kit's type coverage lives in `npm test`,
+  // *consuming* projects instead. The kit's type coverage lives in `pnpm test`,
   // which type-lints the test/fixtures through the fixture project, so the
   // repo-wide lint drops the type-aware parser for its own source.
   {

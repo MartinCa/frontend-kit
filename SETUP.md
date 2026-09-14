@@ -86,10 +86,11 @@ tagging.
 
 ### Publishing needs no token
 
-The workflow authenticates with npm through OIDC ("trusted publishing"): npm
-mints a short-lived, workflow-scoped credential from the `id-token: write`
-permission. There is no npm token to store, rotate or leak, and npm attaches a
-provenance attestation automatically — no `--provenance` flag.
+The workflow authenticates with npm through OIDC ("trusted publishing"): pnpm
+(11+, the workflow pins 12.x) runs the OIDC exchange itself — it mints a
+short-lived, workflow-scoped credential from the `id-token: write` permission.
+There is no npm token to store, rotate or leak, and pnpm attaches a provenance
+attestation automatically for public repositories — no `--provenance` flag.
 
 Two things about the setup are easy to get wrong, and both fail confusingly:
 
@@ -98,8 +99,8 @@ yet.** Unlike PyPI, npm has no pre-registration, so the very first publish must
 use a token. Do it once from your machine and never again:
 
 ```sh
-npm login
-npm publish --access public
+pnpm login
+pnpm publish --access public
 ```
 
 That one publishes whatever version `package.json` currently holds — it is the
@@ -129,11 +130,18 @@ commit, and retries the publish.
 
 **`actions/setup-node` must not be given `registry-url`.** With `registry-url`
 set and no `NODE_AUTH_TOKEN`, it writes an empty `_authToken=` line into
-`.npmrc`; npm reads that, concludes authentication is already configured, skips
-the OIDC exchange entirely and fails with `ENEEDAUTH` or a 404
+`.npmrc`. Under npm that disables OIDC entirely — npm reads the line, concludes
+authentication is already configured, skips the OIDC exchange and fails with
+`ENEEDAUTH` or a 404
 ([actions/setup-node#1551](https://github.com/actions/setup-node/issues/1551)).
-registry.npmjs.org is npm's default anyway, so the fix is to omit the option
-rather than to strip the line back out afterwards.
+pnpm's native publish does not share that failure mode: it runs the OIDC
+exchange first and it takes precedence over any configured static token, and an
+unresolved `${NODE_AUTH_TOKEN}` placeholder resolves to `""` instead of being
+sent literally
+([pnpm#11513](https://github.com/pnpm/pnpm/issues/11513)). registry.npmjs.org is
+the default anyway, so the fix is to omit the option rather than to strip the
+line back out afterwards — and omitting it also keeps an empty fallback
+credential from hiding a genuine auth error if the exchange itself fails.
 
 `publishConfig.access` is set to `public` in `package.json` rather than left to
 the CLI default. npm's own docs disagree with each other about whether a new
@@ -141,9 +149,11 @@ scoped package defaults to public or restricted; stating it removes the
 question, and a scoped package published restricted by accident needs a paid
 plan.
 
-Trusted publishing needs npm CLI 11.5.1+ and Node 22.14+. The workflow pins
-Node 24, which satisfies both, and checks the npm version explicitly so a
-runner image change surfaces as a clear failure rather than an auth error.
+Trusted publishing is implemented natively in pnpm since v11 (`pnpm publish`
+no longer delegates to the npm CLI). The workflow pins pnpm 12.3.4 through the
+`packageManager` field in `package.json`, which `pnpm/action-setup` installs
+exactly, and checks the pnpm version explicitly so a pin regression surfaces as
+a clear failure rather than an auth error.
 
 ### Consuming projects need nothing
 
@@ -427,10 +437,13 @@ remotes:
 
 - `langs/ts.yml` — ESLint `--fix` + Prettier `--write` on staged TS/JS and Prettier on
   JSON/CSS/MD, re-staging fixed files (`stage_fixed`). The fragment runs `pnpm eslint` /
-  `pnpm prettier`; npm-based consumers override those commands in `lefthook-local.yml`,
-  the one config layer that merges *over* `remotes:` (matching command keys deep-merge,
-  keeping the fragment's `glob`/`stage_fixed`), e.g.
-  `npx --no-install eslint --fix {staged_files} && npx --no-install prettier --write {staged_files}`.
+  `pnpm prettier`; this repo pins those commands to the clone-local binaries via
+  `pnpm exec` in `lefthook-local.yml`, the one config layer that merges *over*
+  `remotes:` (matching command keys deep-merge, keeping the fragment's
+  `glob`/`stage_fixed`), e.g.
+  `pnpm exec eslint --fix {staged_files} && pnpm exec prettier --write {staged_files}`.
+  (Before this repo was on pnpm that line read `npx --no-install …`; consumers on
+  other package managers can still override the same way.)
 - `lefthook-shared.yml` — secret-scans the staged diff with `betterleaks` (blocks on a
   leak) and audits staged workflow files with `zizmor` (blocks on a finding). Both tools
   must be on `PATH`: `betterleaks` (install per its project README) and `zizmor` (install
@@ -511,7 +524,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
