@@ -34,7 +34,8 @@ Fix any reported violations or warnings rather than disabling rules or skipping 
 - `shadcn info` — what is installed, which base, where the docs are.
 - `shadcn docs <component>` — current API for a primitive. Use this instead of
   recalling props from memory; the Base UI and Radix APIs differ.
-- `shadcn add <name> --dry-run` / `--view` — inspect before writing files.
+- `shadcn add <name> --dry-run` / `--view` / `--diff` — inspect before writing files.
+- `shadcn preset resolve` — which preset the project is really on (style/baseColor); check alignment.
 
 ## Dependency versions
 

@@ -57,7 +57,7 @@ Committing `routeTree.gen.ts` ensures fresh clones have complete route types for
 IDEs and type-aware linting without an upfront build.
 
 Use `shadcn docs <component>` to get the current API rather than recalling
-props. Use `--dry-run` or `--view` before writing files.
+props. Use `--dry-run`, `--view`, or `--diff` before writing files.
 
 ## Shared pieces come from the kit
 
