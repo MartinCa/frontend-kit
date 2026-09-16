@@ -28,29 +28,29 @@ review and is expected to change as it moves.
 | Phase | What | Status | Last updated (UTC) |
 |---|---|---|---|
 | 0. Baseline | Record release-tag baseline, relevant repos, established findings | done | 2026-09-16T15:36:52Z |
-| 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | in progress | 2026-09-16T15:36:52Z |
+| 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | done | 2026-09-16T15:48:44Z |
 | 2. frontend-kit release | Merge, tag the next release, publish; consumer reviews then start from the new tag | not started | |
 | 2.5. audiobook-manager/client preset alignment | Realign to the intended `b0`/Base UI preset — downstream, after Phase 2, before Phase 3 | not started | |
 | 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | not started | |
 
 ### Phase 1 — frontend-kit documentation (this PR)
 
-- [ ] 1.1 Maintenance-review methodology in [MAINTENANCE.md](./MAINTENANCE.md):
+- [x] 1.1 Maintenance-review methodology in [MAINTENANCE.md](./MAINTENANCE.md):
       checks start from the last frontend-kit release tag; a
       release-note/documentation-impact review rather than outdated-dependency
       chasing; the relevant repositories; non-destructive `shadcn` inspection;
       targeted component updates; preset alignment; exact timestamp recording.
-- [ ] 1.2 Version bounds documented: TypeScript is capped by typescript-eslint's
+- [x] 1.2 Version bounds documented: TypeScript is capped by typescript-eslint's
       official peer range (`>=4.8.4 <6.1.0`, v8.70.0 today), not by
       frontend-kit's declared range; ESLint 10 is supported; frontend-kit's
       `peerDependencies` stay unchanged.
-- [ ] 1.3 Preset drift filed: `audiobook-manager/client` is on the old default
+- [x] 1.3 Preset drift filed: `audiobook-manager/client` is on the old default
       scaffold (`style: default`, `baseColor: slate`) instead of the intended
       `b0`/Base UI preset — queued for Phase 2.5.
-- [ ] 1.4 This plan kept current as the work moves.
+- [x] 1.4 This plan kept current as the work moves.
 
-Status: in progress — plan and doc changes drafted, commits pending review.
-Last updated: 2026-09-16T15:36:52Z
+Status: complete — drafted, checked, and committed; awaiting review.
+Last updated: 2026-09-16T15:48:44Z
 
 ### Phase 2.5 — audiobook-manager/client preset alignment (downstream)
 
@@ -105,3 +105,5 @@ frontend-kit release tag:
 ## Change log
 
 - 2026-09-16T15:36:52Z — plan created; Phase 1 drafted.
+- 2026-09-16T15:48:44Z — Phase 1 items done; plan, methodology, and rationale
+  committed to the `frontend-kit-maintenance-review` branch.

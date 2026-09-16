@@ -182,6 +182,23 @@ Record the exact UTC timestamp of every check in [PLAN.md](./PLAN.md)
 "as of" moment is on record — the next review needs it to line up with the tag
 it starts from.
 
+### Version bounds that are policy, not drift
+
+TypeScript's ceiling is set elsewhere. The lint machinery this kit runs on —
+typescript-eslint — declares its own official TypeScript peer range
+(`>=4.8.4 <6.1.0` in v8.70.0, the version this repo resolves), so TypeScript
+6.1+ and TypeScript 7 are blocked by typescript-eslint, not by frontend-kit.
+ESLint, by contrast, is fully current: typescript-eslint v8 peers
+`eslint ^8.57.0 || ^9.0.0 || ^10.0.0`, so ESLint 10 is supported and
+frontend-kit's `eslint >=9` peer is satisfied.
+
+frontend-kit's declared `peerDependencies` (`typescript >=5.5 <7`,
+`eslint >=9`, in `package.json`) do **not** change. The ceiling is documented
+policy, and Renovate already enforces it (`renovate-frontend.json` keeps
+`typescript <7.0.0`). When typescript-eslint widens its official range past
+6.1.0, the right response is a note in this section and a Renovate bump — not a
+hand-written range.
+
 ## Signals something has drifted
 
 - `pnpm lint` violation count going up over time with no corresponding
