@@ -98,10 +98,8 @@ so its push is allowed. One-time operational checklist:
 2. **Install it on this repository** — Install App → *Only select
    repositories* → `MartinCa/frontend-kit`, approving the Contents permission.
 3. **Store two Actions secrets:**
-   - `VERSION_BUMP_APP_ID` — the App's **Client ID** (`Iv1.…`, from the App's
-     General page). Despite the secret name, it is the *client ID* that the
-     `actions/create-github-app-token` `client-id` input reads, not the numeric
-     App ID.
+   - `VERSION_BUMP_APP_CLIENT_ID` — the App's **Client ID** (`Iv1.…`, from the
+     App's General page).
    - `VERSION_BUMP_APP_PRIVATE_KEY` — the App's private key (App page →
      *Generate a private key*; paste the PEM file's contents into the secret).
 4. **Bypass the main ruleset for the App** — Settings → Rules → Rulesets →
