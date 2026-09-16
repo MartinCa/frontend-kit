@@ -17,6 +17,8 @@ Start here: [SETUP.md](./SETUP.md). The rules themselves: [docs/DESIGN.md](./doc
 Bringing an existing repo onto this: [docs/MIGRATION.md](./docs/MIGRATION.md)
 (includes ready-to-paste agent prompts for incremental adoption and full UI migration).
 Ongoing upkeep once a project is on it: [docs/MAINTENANCE.md](./docs/MAINTENANCE.md).
+The current maintenance review, cross-repo, with its live status:
+[docs/PLAN.md](./docs/PLAN.md).
 
 ## Preset
 

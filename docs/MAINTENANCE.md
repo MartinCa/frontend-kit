@@ -103,11 +103,110 @@ a public repo, so neither the package install nor a shadcn registry read needs
 a credential. If a `GH_TOKEN` is still set anywhere for this kit, it is left
 over from the GitHub Packages era and can go.
 
+## Maintenance review — check the kit, not the dependency graph
+
+The sections above are what a single project does on its own. A maintenance
+**review** is the deliberate cross-repo pass that checks the kit itself — every
+consumer plus frontend-kit — against the current ecosystem, and it is the moment
+a [MIGRATION.md](./MIGRATION.md)-scale change gets decided on rather than
+deferred. Run one after each frontend-kit release, or when shadcn, Base UI, or
+ESLint tooling ships something that changes how the kit is consumed.
+
+The current review's plan and live status live in [PLAN.md](./PLAN.md) — phases,
+status, and the exact timestamp of every check. Keep that file current while the
+work progresses.
+
+### The checks start from the last frontend-kit release tag
+
+The baseline is the last release tag, not a memory of what looked outdated.
+In this repo:
+
+```sh
+git describe --tags --abbrev=0     # the last release tag reachable from HEAD, e.g. v0.2.6
+git log v0.2.6..HEAD               # everything since that tag
+```
+
+Everything is scoped from that tag forward, and the review is a
+**release-note and documentation-impact review**: what changed for consumers
+since the tag — new shadcn CLI commands, changed defaults, new preset codes,
+new peer constraints — not a hunt for dependencies that merely look old. An
+unchanged but still-supported version is not drift, and is not work.
+
+### The repositories a review covers
+
+frontend-kit plus every consumer that reads from it. Today that is
+`audiobook-manager/client`, `search-books`, and `prowlarr-watcher/frontend`.
+Alignment problems — preset mismatch, vendored docs aging out — only show up
+cross-repo, so a review that looks at one repo in isolation is not a review.
+
+### Non-destructive inspection comes first
+
+Nothing is written until inspection says why. All of these are read-only:
+
+```sh
+pnpm dlx shadcn@latest info                          # what's installed, which base, where docs live
+pnpm dlx shadcn@latest preset resolve                # which preset the project is really on (--json for scripts)
+pnpm dlx shadcn@latest add <component> --diff        # what changed upstream for a file
+pnpm dlx shadcn@latest add <component> --dry-run / --view
+git diff                                             # plus the diff of what was already touched
+```
+
+### Targeted component updates, never batches
+
+Component updates follow the "when you have a reason" rule above — only
+components being touched or with a known upstream fix, never a sweep, and never
+bundled with unrelated work: `add <component> --overwrite`, resolved with git.
+
+### Preset alignment
+
+Every consumer should sit on the same intended preset as this repo: `b0`
+(Base UI — `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` in
+`components.json`). `preset resolve` shows which preset a project is really on.
+Realignment is deliberate, cheap, and can be scoped:
+
+```sh
+pnpm dlx shadcn@latest apply --preset b0
+pnpm dlx shadcn@latest apply --preset b0 --only theme,font   # targeted
+```
+
+`init --preset b0` does the same for a project that was never on a preset.
+Known drift is tracked in [PLAN.md](./PLAN.md): `audiobook-manager/client` is
+currently on the old default scaffold (`style: default`, `baseColor: slate`)
+and is queued for alignment in Phase 2.5 — after the frontend-kit changes land,
+before the general consumer review.
+
+### Exact timestamps
+
+Record the exact UTC timestamp of every check in [PLAN.md](./PLAN.md)
+(`date -u +"%Y-%m-%dT%H:%M:%SZ"`). A review is only reproducible when the
+"as of" moment is on record — the next review needs it to line up with the tag
+it starts from.
+
+### Version bounds that are policy, not drift
+
+TypeScript's ceiling is set elsewhere. The lint machinery this kit runs on —
+typescript-eslint — declares its own official TypeScript peer range
+(`>=4.8.4 <6.1.0` in v8.70.0, the version this repo resolves), so TypeScript
+6.1+ and TypeScript 7 are blocked by typescript-eslint, not by frontend-kit.
+ESLint, by contrast, is fully current: typescript-eslint v8 peers
+`eslint ^8.57.0 || ^9.0.0 || ^10.0.0`, so ESLint 10 is supported and
+frontend-kit's `eslint >=9` peer is satisfied.
+
+frontend-kit's declared `peerDependencies` (`typescript >=5.5 <7`,
+`eslint >=9`, in `package.json`) do **not** change. The ceiling is documented
+policy, and Renovate already enforces it (`renovate-frontend.json` keeps
+`typescript <7.0.0`). When typescript-eslint widens its official range past
+6.1.0, the right response is a note in this section and a Renovate bump — not a
+hand-written range.
+
 ## Signals something has drifted
 
 - `pnpm lint` violation count going up over time with no corresponding
   Renovate PR — someone's disabling rules instead of fixing them, or the
   config package fell behind.
+- `shadcn preset resolve` reporting a different style/baseColor than the
+  intended `b0` preset — the project was scaffolded off-preset or re-inited
+  elsewhere; that is a Phase 2.5-style alignment, not a dependency bump.
 - `git diff` after an `--overwrite` touching more than DESIGN.md section 9 —
   a supposedly-vendored file was hand-edited.
 - A new project's DESIGN.md section 9 left blank — it was scaffolded without
