@@ -78,11 +78,36 @@ The version lives in the release tag, not in a commit you make by hand —
 `package.json`'s version is a record of the last thing published, kept in sync
 automatically. Don't hand-edit it; the next release overwrites it.
 
-The workflow pushes that bump commit to the default branch with the default
-`GITHUB_TOKEN`. If branch protection ever requires PRs or status checks before
-a push lands, that push fails — either add an exception for
-`github-actions[bot]`, or drop the step and bump `package.json` by hand before
-tagging.
+The workflow pushes that bump commit to the default branch as the
+**VERSION_BUMP** GitHub App — see the next section — because the default
+`GITHUB_TOKEN` cannot: the main ruleset blocks its direct pushes.
+
+### The version-bump push needs a GitHub App
+
+The repository's main ruleset requires PRs (and status checks) before a push
+lands, so the release workflow cannot push the `package.json` bump commit with
+the default `GITHUB_TOKEN`. Instead it mints a short-lived installation token
+for the **VERSION_BUMP** GitHub App, scoped to this repository with `contents:
+write` only, and pushes with that. The App is on the main ruleset's bypass list,
+so its push is allowed. One-time operational checklist:
+
+1. **Create the App** — GitHub → Settings → Developer settings → GitHub Apps →
+   New GitHub App. Under App permissions, set repository permission
+   **Contents: Read and write** (the workflow requests exactly
+   `permission-contents: write`).
+2. **Install it on this repository** — Install App → *Only select
+   repositories* → `MartinCa/frontend-kit`, approving the Contents permission.
+3. **Store two Actions secrets:**
+   - `VERSION_BUMP_APP_ID` — the App's **Client ID** (`Iv1.…`, from the App's
+     General page). Despite the secret name, it is the *client ID* that the
+     `actions/create-github-app-token` `client-id` input reads, not the numeric
+     App ID.
+   - `VERSION_BUMP_APP_PRIVATE_KEY` — the App's private key (App page →
+     *Generate a private key*; paste the PEM file's contents into the secret).
+4. **Bypass the main ruleset for the App** — Settings → Rules → Rulesets →
+   edit the main ruleset and add the App to its **Bypass list** (Bypass
+   ruleset → GitHub Apps). Without this, the bump push fails exactly like the
+   old `GITHUB_TOKEN` push did.
 
 ### Publishing needs no token
 
