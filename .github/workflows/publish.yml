@@ -10,7 +10,10 @@ on:
         required: false
 
 permissions:
-  contents: write # the version-bump commit pushed below
+  # The version-bump push no longer uses GITHUB_TOKEN (the main ruleset blocks
+  # it); that push authenticates as the VERSION_BUMP App below, so the workflow
+  # token only needs read for the checkout.
+  contents: read
   id-token: write # mints the short-lived OIDC credential the workflow publishes with
 
 jobs:
@@ -18,10 +21,11 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     steps:
-      # persist-credentials stays true (the default): this job pushes a
-      # version-bump commit later in the workflow using the checked-out
-      # git credentials, and no artifact upload step exposes the checkout
-      # directory, so the credential-persistence risk doesn't apply here.
+      # persist-credentials stays true (the default): no artifact upload step
+      # exposes the checkout directory, so the credential-persistence risk
+      # doesn't apply here. The version-bump push later in this workflow does
+      # NOT use these persisted credentials — it replaces them with the
+      # VERSION_BUMP App's installation token (see below).
       - name: Checkout default branch # zizmor: ignore[artipacked] needed for the git push below; no artifacts are uploaded from this checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -104,6 +108,28 @@ jobs:
           GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
           GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
+      # Mint the VERSION_BUMP GitHub App's installation token for the
+      # version-bump push below. The default GITHUB_TOKEN is denied writes to
+      # the default branch by the repository's main ruleset; the App is on
+      # that ruleset's bypass list, so its token may land the automated bump
+      # commit.
+      #
+      # `client-id` is the action's current identifier input and takes the
+      # App's Client ID (the Iv1.… string on the App's General page), stored
+      # in VERSION_BUMP_APP_CLIENT_ID; VERSION_BUMP_APP_PRIVATE_KEY holds the
+      # App's private key (SETUP.md Part 2).
+      # owner/repositories are intentionally left unset, which scopes the token
+      # to this repository only, and permission-contents: write is the narrowest
+      # permission the push needs. The token is short-lived (1h) and revoked by
+      # the action's post step when the job ends, and the action masks it so it
+      # cannot appear in logs.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.VERSION_BUMP_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VERSION_BUMP_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Bump package.json to match and commit
         run: |
           git config user.name "github-actions[bot]"
@@ -112,12 +138,19 @@ jobs:
           if ! git diff --quiet -- package.json; then
             git add package.json
             git commit --no-verify -m "chore: release v${STEPS_VERSION_OUTPUTS_VERSION} [skip ci]"
-            git push origin "HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}"
+            # Authenticate this push as the VERSION_BUMP App, not GITHUB_TOKEN:
+            # drop the credentials actions/checkout persisted above
+            # (persist-credentials), then push to a URL carrying the App's
+            # installation token. The token is passed via env only, so it is
+            # never in the script text; the action also masks it in logs.
+            git config --local --unset-all "http.https://github.com/.extraheader" || true
+            git push "https://x-access-token:${VERSION_BUMP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH}"
           fi
         env:
           LEFTHOOK: "0"
           STEPS_VERSION_OUTPUTS_VERSION: ${{ steps.version.outputs.version }}
           GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          VERSION_BUMP_TOKEN: ${{ steps.app-token.outputs.token }}
 
       # No token: pnpm exchanges the Actions OIDC token for a short-lived,
       # workflow-scoped credential via the npm registry's OIDC endpoint.
