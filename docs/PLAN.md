@@ -19,8 +19,8 @@ review and is expected to change as it moves.
 | Repository | Role | Preset state |
 |---|---|---|
 | `frontend-kit` | the kit itself | preset `b0` (README); peer range `typescript >=5.5 <7` |
-| `search-books` | consumer | on preset `b0` — `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
-| `prowlarr-watcher/frontend` | consumer | on preset `b0` — same resolution as `search-books` |
+| `search-books` | consumer | preset `b0` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
+| `prowlarr-watcher/frontend` | consumer | preset `b0` — same state as `search-books` |
 | `audiobook-manager/client` | consumer | **drifted** — see Phase 2.5 |
 
 ## Phases
@@ -28,7 +28,7 @@ review and is expected to change as it moves.
 | Phase | What | Status | Last updated (UTC) |
 |---|---|---|---|
 | 0. Baseline | Record release-tag baseline, relevant repos, established findings | done | 2026-09-16T15:36:52Z |
-| 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | done | 2026-09-16T15:48:44Z |
+| 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | done | 2026-09-16T16:16:11Z |
 | 2. frontend-kit release | Merge, tag the next release, publish; consumer reviews then start from the new tag | not started | |
 | 2.5. audiobook-manager/client preset alignment | Realign to the intended `b0`/Base UI preset — downstream, after Phase 2, before Phase 3 | not started | |
 | 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | not started | |
@@ -50,7 +50,7 @@ review and is expected to change as it moves.
 - [x] 1.4 This plan kept current as the work moves.
 
 Status: complete — drafted, checked, and committed; awaiting review.
-Last updated: 2026-09-16T15:48:44Z
+Last updated: 2026-09-16T16:16:11Z
 
 ### Phase 2.5 — audiobook-manager/client preset alignment (downstream)
 
@@ -63,7 +63,8 @@ the Phase 3 general consumer review.
 - Evidence of drift: `client/components.json` records `style: default`,
   `baseColor: slate` — the pre-preset default scaffold, from commit `bb46cb9`
   ("Migrate frontend to React 19, Tailwind CSS, and shadcn/ui"), which used no
-  preset. The two aligned consumers resolve to `style: base-nova`,
+  preset. The two aligned consumers are on preset `b0` — `shadcn preset resolve`
+  reports style `nova`, and their `components.json` records `style: base-nova`,
   `baseColor: neutral`, `iconLibrary: lucide` (`search-books` `e4bcf7c`
   "Initialize shadcn/ui with preset b0"; `prowlarr-watcher` `31fb736`
   "Scaffold frontend/ with Vite + React + TS + Tailwind + shadcn (b0)").
@@ -93,6 +94,12 @@ frontend-kit release tag:
 - shadcn CLI surface: `info`, `preset resolve` (`--json`), `add --diff` /
   `--dry-run` / `--view`, `migrate cn`, `apply --preset <code>` /
   `--only theme,font`, `init --preset <code>`.
+- `preset resolve` vs `components.json`: for a project on preset `b0` (Base UI),
+  `shadcn preset resolve` reports style `nova` with the preset code `b0`, while
+  the same preset is recorded on disk as `style: base-nova` in
+  `components.json`. They describe the same preset — `nova` is the resolved
+  style name, `base-nova` the stored value — and must not be compared as if
+  they were equal strings.
 - `cn` migration is not needed for current consumers — all three
   (`search-books`, `prowlarr-watcher/frontend`, `audiobook-manager/client`)
   already run `export { cn } from "cn"` in `lib/utils.ts`.
@@ -107,3 +114,7 @@ frontend-kit release tag:
 - 2026-09-16T15:36:52Z — plan created; Phase 1 drafted.
 - 2026-09-16T15:48:44Z — Phase 1 items done; plan, methodology, and rationale
   committed to the `frontend-kit-maintenance-review` branch.
+- 2026-09-16T16:16:11Z — reviewer fixes: plugin bumped to 0.3.3 (SKILL.md
+  changed); MAINTENANCE.md baseline command is now `git describe --tags
+  --abbrev=0`; plan now distinguishes `preset resolve` output (style `nova`)
+  from the `components.json` value (`style: base-nova`).

@@ -122,8 +122,8 @@ The baseline is the last release tag, not a memory of what looked outdated.
 In this repo:
 
 ```sh
-git tag -l --sort=-version:refname | head     # last line is the baseline, e.g. v0.2.6
-git log v0.2.6..HEAD                          # everything since that tag
+git describe --tags --abbrev=0     # the last release tag reachable from HEAD, e.g. v0.2.6
+git log v0.2.6..HEAD               # everything since that tag
 ```
 
 Everything is scoped from that tag forward, and the review is a
