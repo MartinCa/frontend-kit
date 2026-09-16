@@ -168,13 +168,14 @@ jobs:
       # The App's installation token must not outlive the job: remove the
       # rewrite from the runner's global git config now that the bump push is
       # done (or skipped). `always()` so a failed push does not leave the
-      # credential behind on the shared runner; unsetting a missing key is a
-      # no-op.
+      # credential behind on the shared runner. The key is given without
+      # literal quotes (git parses the subsection unquoted); unsetting a
+      # missing key is a no-op.
       - name: Remove the VERSION_BUMP App rewrite from global git config
         if: always()
         env:
           APP_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: git config --global --unset-all "url.\"https://x-access-token:${APP_TOKEN}@github.com/\".insteadOf" || true
+        run: git config --global --unset-all "url.https://x-access-token:${APP_TOKEN}@github.com/.insteadOf" || true
 
       # No token: pnpm exchanges the Actions OIDC token for a short-lived,
       # workflow-scoped credential via the npm registry's OIDC endpoint.
