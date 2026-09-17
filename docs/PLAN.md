@@ -31,7 +31,7 @@ review and is expected to change as it moves.
 | 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | done | 2026-09-16T16:16:11Z |
 | 2. frontend-kit release | Merge, tag the next release, publish; consumer reviews then start from the new tag | done — `v0.2.10` shipped | 2026-09-16T19:26:20Z (tag) |
 | 2.5. audiobook-manager/client preset alignment | Realign to the intended `b0`/Base UI preset — downstream, after Phase 2, before Phase 3 | done — merged upstream (audiobook-manager PR #1452) | 2026-09-17T15:15:24Z (merge) |
-| 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | in review — investigation done, implementation landed in three consumer PRs, all open/unmerged | 2026-09-17T21:57:18Z |
+| 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | done — all three consumer PRs merged | 2026-09-17T23:35:07Z |
 
 ### Phase 1 — frontend-kit documentation (this PR)
 
@@ -83,7 +83,7 @@ Last updated: 2026-09-17T21:57:18Z
 
 ### Phase 3 — General consumer review (downstream)
 
-**Status: implemented — investigation complete, changes landed on three consumer PR branches; all three PRs are open and none merged** as of this update (2026-09-17T21:57:18Z).
+**Status: done — all three consumer PRs merged upstream** (audiobook-manager PR #1460 at 2026-09-17T22:30:38Z, prowlarr-watcher PR #143 at 2026-09-17T22:31:22Z, search-books PR #60 at 2026-09-17T23:28:00Z). search-books's follow-up Docker matcher-type fix `acbe3cc` (2026-09-17T22:52:54Z) is the green CI head. Final outcome recorded 2026-09-17T23:35:07Z.
 
 Baseline and scope:
 
@@ -104,17 +104,18 @@ All three consumers were confirmed on the `b0` preset (`style: base-nova`, `base
 - **search-books** — the frontend had no test suite and no `pnpm test` script (the shared `pre-push-ts` lefthook fragment was deliberately not adopted; CI only type-checked via `pnpm build`); re-searching wiped the current results the moment a new fetch started (empty-state flash); `AGENTS.md` still claimed "there is no frontend test suite".
 - **prowlarr-watcher/frontend** — vendored base-nova UI components had drifted from the current registry output (stale blank-line style, `"use client"` placement on `checkbox`/`label`/`dialog`); the API client merged headers with object spread, which silently drops `Headers` instances and array-pair `HeadersInit` values; empty/204/205 responses (200 with a body of `""` too) threw a raw `JSON.parse` `SyntaxError` instead of returning `undefined`, breaking the single-error-type (`ApiError`) contract; the API client had no unit tests.
 
-#### Concrete changes per PR (all open, not merged)
+#### Concrete changes per PR (all merged)
 
-- **audiobook-manager PR #1460** — "feat(client): improve list loading states", created 2026-09-17T21:43:07Z, branch `phase3-frontend-review-latest`, 19 files (+140/−28):
+- **audiobook-manager PR #1460** — "feat(client): improve list loading states", created 2026-09-17T21:43:07Z, merged 2026-09-17T22:30:38Z, branch `phase3-frontend-review-latest`, 19 files (+140/−28):
   - Vendored the shadcn `Skeleton` component (`client/src/components/ui/skeleton.tsx`, commit 19:23:12Z) and replaced spinner-only loading UI in `BookList`, `BookLibrary`, `CleanBookUrls`, and `MissingTags` with skeleton rows (`role="status"` labels) plus tests (commit 19:55:17Z).
   - Normalized vendored UI imports (`badge`, `card`, `checkbox`, `dialog`, `input`, `table`, `textarea`) to import `cn` directly (commit 19:23:35Z).
   - Moved `shadcn` to devDependencies and dropped the stale release-age excludes (commit 20:02:30Z). Validation: build, 557 frontend tests, lint, format-check, dotnet build + 1353 backend tests.
-- **search-books PR #60** — "feat: retain previous search results while re-searching", created 2026-09-17T21:43:53Z, branch `phase3-frontend-review-pr`, 10 files (+853/−10, mostly lockfile):
+- **search-books PR #60** — "feat: retain previous search results while re-searching", created 2026-09-17T21:43:53Z, merged 2026-09-17T23:28:00Z, branch `phase3-frontend-review-pr`, 10 files (+853/−10, mostly lockfile):
   - `placeholderData: keepPreviousData` on the `/search` query so previous results stay visible during the re-search (commit 21:34:29Z).
   - Added the first frontend test suite — Vitest + Testing Library + jsdom (`vitest.config.ts`, `vitest.setup.ts`, `src/App.test.tsx` with a deferred-request regression test; commits 21:34–21:40Z).
   - Wired `pnpm test` into CI as a blocking gate and adopted the `pre-push-ts` lefthook fragment; documented the suite in `AGENTS.md` (commit 21:35:02Z).
-- **prowlarr-watcher PR #143** — "chore(frontend): refresh UI components and harden API client", created 2026-09-17T21:44:32Z, branch `phase3-frontend-review-latest`, 13 files (+170/−21):
+  - Docker follow-up: `acbe3cc` "fix(build): ship jest-dom matcher types inside src for Docker" (2026-09-17T22:52:54Z) vendored the Vitest matcher types inside `src` so the Docker build type-checks; CI on `acbe3cc` (the merged head) is green.
+- **prowlarr-watcher PR #143** — "chore(frontend): refresh UI components and harden API client", created 2026-09-17T21:44:32Z, merged 2026-09-17T22:31:22Z, branch `phase3-frontend-review-latest`, 13 files (+170/−21):
   - Refreshed 11 vendored base-nova UI components against the current registry while preserving the local mobile dialog behavior (commit 19:50:09Z).
   - API client hardening: `buildHeaders()` merges any `HeadersInit` through a real `Headers` (caller headers win; CSRF token added for mutating requests); `parseBody()` treats 204/205 and empty bodies as `undefined`; `ApiError` stays the only error type (commit 20:06:02Z).
   - Added `frontend/src/lib/api.test.ts` covering `HeadersInit` variants, CSRF behavior, bodiless/empty responses, and error parsing.
@@ -125,6 +126,29 @@ All three consumers were confirmed on the `b0` preset (`style: base-nova`, `base
 - **pagination** — `DESIGN.md` tells consumers to record a per-project pagination convention; consumers still hand-roll page state (e.g. `PAGE_SIZE` in `CleanBookUrls`) without recording the convention in DESIGN.md's project section. Standardizing pagination across consumers is deferred.
 - **API-types process** — the `src/lib/api-types.ts` regeneration differs per consumer (`generate-api-types` script in audiobook-manager, `generate:api-types` in prowlarr-watcher, only a bare `openapi-typescript` dependency in search-books with no script) and frontend-kit's "regenerate from the OpenAPI spec" is not one executable process. A consistent process/convention is deferred.
 - **query-key work** — TanStack Query key shapes and invalidation conventions vary between consumers (e.g. `["books", q, page, pageSize]` plus SignalR `OperationKeys` in audiobook-manager; `["search", activeQuery]` in search-books). A shared query-key strategy is deferred.
+
+#### Issue follow-ups (future work, not Phase 3)
+
+Findings that were filed as tracked issues rather than changed in Phase 3 stay
+open as future work:
+
+- audiobook-manager #1453 (application-owned notification wrapper), #1454
+  (app-owned dialog shell and confirmation wrappers), #1455 (centralized
+  TanStack Query keys and invalidation factories).
+- frontend-kit #58 — OpenCode compatibility for the frontend-kit conventions
+  (the Claude plugin does not extend OpenCode).
+
+These are follow-ups; none of them is part of Phase 3.
+
+#### Final review outcome
+
+No actionable framework migration remains beyond the approved consumer
+improvements (skeleton loading states, retained search results, refreshed
+vendored UI components, hardened API client, first frontend test suites).
+TypeScript 7 remains blocked by typescript-eslint's official peer range
+(`>=4.8.4 <6.1.0`) and stays deferred until upstream support exists — a
+documentation matter in `MAINTENANCE.md`, never a `peerDependencies` edit.
+Phase 3 is complete.
 
 ## Established findings used by this review
 
@@ -165,3 +189,9 @@ All three consumers were confirmed on the `b0` preset (`style: base-nova`, `base
 - 2026-09-17T21:57:18Z — Phase 3 investigation and implementation status
   recorded in this plan; consumer PRs marked open/not merged; deferred items
   (alert-dialog, pagination, API-types process, query-key work) filed.
+- 2026-09-17T23:35:07Z — Phase 3 finalized: all three consumer PRs merged
+  (audiobook-manager #1460 at 22:30:38Z, prowlarr-watcher #143 at 22:31:22Z,
+  search-books #60 at 23:28:00Z); search-books Docker matcher-type follow-up
+  `acbe3cc` shipped with green CI; Phase 3 marked done; deferred items retained
+  and issue follow-ups (#1453/#1454/#1455, frontend-kit #58) recorded as future
+  work, not Phase 3.
