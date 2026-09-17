@@ -10,8 +10,8 @@ review and is expected to change as it moves.
 
 ## Baseline
 
-- Last frontend-kit release tag: `v0.2.6` (`1855b38`, 2026-09-05)
-- Review target: `56d50b4` (2026-09-14) — 37 commits after the tag
+- Phases 0–2.5 baselined from `v0.2.6` (`1855b38`, 2026-09-05); original review target was `56d50b4` (2026-09-14).
+- Phase 3 baselines from the Phase 2 release: frontend-kit `v0.2.10` (`f466526`, tagged 2026-09-16T19:26:20Z).
 - Review started: 2026-09-16T15:36:52Z
 
 ## Relevant repositories
@@ -21,7 +21,7 @@ review and is expected to change as it moves.
 | `frontend-kit` | the kit itself | preset `b0` (README); peer range `typescript >=5.5 <7` |
 | `search-books` | consumer | preset `b0` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
 | `prowlarr-watcher/frontend` | consumer | preset `b0` — same state as `search-books` |
-| `audiobook-manager/client` | consumer | **drifted** — see Phase 2.5 |
+| `audiobook-manager/client` | consumer | **aligned** — `b0`/Base UI since Phase 2.5 (PR #1452) |
 
 ## Phases
 
@@ -29,9 +29,9 @@ review and is expected to change as it moves.
 |---|---|---|---|
 | 0. Baseline | Record release-tag baseline, relevant repos, established findings | done | 2026-09-16T15:36:52Z |
 | 1. frontend-kit docs | Maintenance-review methodology in MAINTENANCE.md; version-bounds rationale; this plan | done | 2026-09-16T16:16:11Z |
-| 2. frontend-kit release | Merge, tag the next release, publish; consumer reviews then start from the new tag | not started | |
-| 2.5. audiobook-manager/client preset alignment | Realign to the intended `b0`/Base UI preset — downstream, after Phase 2, before Phase 3 | not started | |
-| 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | not started | |
+| 2. frontend-kit release | Merge, tag the next release, publish; consumer reviews then start from the new tag | done — `v0.2.10` shipped | 2026-09-16T19:26:20Z (tag) |
+| 2.5. audiobook-manager/client preset alignment | Realign to the intended `b0`/Base UI preset — downstream, after Phase 2, before Phase 3 | done — merged upstream (audiobook-manager PR #1452) | 2026-09-17T15:15:24Z (merge) |
+| 3. General consumer review | Run the Phase 1 methodology against every consumer from the Phase 2 tag | in review — investigation done, implementation landed in three consumer PRs, all open/unmerged | 2026-09-17T21:57:18Z |
 
 ### Phase 1 — frontend-kit documentation (this PR)
 
@@ -76,18 +76,55 @@ the Phase 3 general consumer review.
 - `cn` migration is **not** needed — the client already exports `cn` from the
   `cn` package (`src/lib/utils.ts`).
 
+Status: done — landed upstream in audiobook-manager PR #1452 ("feat(client):
+align UI with shadcn b0 preset"), merged 2026-09-17T15:15:24Z. The Phase 3
+baseline confirmed `client/components.json` now records `style: base-nova`.
+Last updated: 2026-09-17T21:57:18Z
+
 ### Phase 3 — General consumer review (downstream)
 
-Run the Phase 1 methodology against every consumer, starting from the Phase 2
-frontend-kit release tag:
+**Status: implemented — investigation complete, changes landed on three consumer PR branches; all three PRs are open and none merged** as of this update (2026-09-17T21:57:18Z).
 
-- `shadcn info` + `shadcn preset resolve` in each repo — what is installed,
-  which base, which preset the project is really on.
-- Release-note/documentation-impact review since the tag (new CLI commands,
-  changed defaults, new preset codes, new peer constraints).
-- Targeted component updates only — never a batch sweep.
-- Preset alignment to `b0` for every consumer.
-- Record every check's exact UTC timestamp.
+Baseline and scope:
+
+- Baselines from the Phase 2 tag, frontend-kit `v0.2.10` (`f466526`), and from each consumer's **latest remote default branch** at the time, in fresh worktrees — not from stale local branches.
+- Ran the Phase 1 methodology (see `MAINTENANCE.md`): `shadcn info` + `shadcn preset resolve`, release-note/documentation-impact review since the tag, targeted component updates only (never a batch sweep), `b0` preset alignment, exact UTC timestamps.
+
+| Consumer | Remote default baseline used | Phase 3 branch (worktree) |
+|---|---|---|
+| `audiobook-manager` | `259c2c5` (2026-09-17T15:20:59Z) | `phase3-frontend-review-latest` |
+| `search-books` | `ef3c9a3` (2026-09-17T20:47:27Z) | `phase3-frontend-review-pr` (PR head) |
+| `prowlarr-watcher` | `8b7954d` (2026-09-17T03:11:34Z) | `phase3-frontend-review-latest` |
+
+All three consumers were confirmed on the `b0` preset (`style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide`) — `audiobook-manager` after Phase 2.5 PR #1452 — so no further preset alignment was needed.
+
+#### Findings
+
+- **audiobook-manager/client** — list loading states were spinner-only (no layout feedback; empty shell flash while fetching); vendored `components/ui/*` imported `cn` via the `@/lib/utils` shim instead of the `cn` package; `shadcn` was a runtime dependency; `pnpm-workspace.yaml` still carried bootstrap-era `minimumReleaseAgeExclude` pins (`react-hook-form@7.87.0`, `zod@4.5.4`).
+- **search-books** — the frontend had no test suite and no `pnpm test` script (the shared `pre-push-ts` lefthook fragment was deliberately not adopted; CI only type-checked via `pnpm build`); re-searching wiped the current results the moment a new fetch started (empty-state flash); `AGENTS.md` still claimed "there is no frontend test suite".
+- **prowlarr-watcher/frontend** — vendored base-nova UI components had drifted from the current registry output (stale blank-line style, `"use client"` placement on `checkbox`/`label`/`dialog`); the API client merged headers with object spread, which silently drops `Headers` instances and array-pair `HeadersInit` values; empty/204/205 responses (200 with a body of `""` too) threw a raw `JSON.parse` `SyntaxError` instead of returning `undefined`, breaking the single-error-type (`ApiError`) contract; the API client had no unit tests.
+
+#### Concrete changes per PR (all open, not merged)
+
+- **audiobook-manager PR #1460** — "feat(client): improve list loading states", created 2026-09-17T21:43:07Z, branch `phase3-frontend-review-latest`, 19 files (+140/−28):
+  - Vendored the shadcn `Skeleton` component (`client/src/components/ui/skeleton.tsx`, commit 19:23:12Z) and replaced spinner-only loading UI in `BookList`, `BookLibrary`, `CleanBookUrls`, and `MissingTags` with skeleton rows (`role="status"` labels) plus tests (commit 19:55:17Z).
+  - Normalized vendored UI imports (`badge`, `card`, `checkbox`, `dialog`, `input`, `table`, `textarea`) to import `cn` directly (commit 19:23:35Z).
+  - Moved `shadcn` to devDependencies and dropped the stale release-age excludes (commit 20:02:30Z). Validation: build, 557 frontend tests, lint, format-check, dotnet build + 1353 backend tests.
+- **search-books PR #60** — "feat: retain previous search results while re-searching", created 2026-09-17T21:43:53Z, branch `phase3-frontend-review-pr`, 10 files (+853/−10, mostly lockfile):
+  - `placeholderData: keepPreviousData` on the `/search` query so previous results stay visible during the re-search (commit 21:34:29Z).
+  - Added the first frontend test suite — Vitest + Testing Library + jsdom (`vitest.config.ts`, `vitest.setup.ts`, `src/App.test.tsx` with a deferred-request regression test; commits 21:34–21:40Z).
+  - Wired `pnpm test` into CI as a blocking gate and adopted the `pre-push-ts` lefthook fragment; documented the suite in `AGENTS.md` (commit 21:35:02Z).
+- **prowlarr-watcher PR #143** — "chore(frontend): refresh UI components and harden API client", created 2026-09-17T21:44:32Z, branch `phase3-frontend-review-latest`, 13 files (+170/−21):
+  - Refreshed 11 vendored base-nova UI components against the current registry while preserving the local mobile dialog behavior (commit 19:50:09Z).
+  - API client hardening: `buildHeaders()` merges any `HeadersInit` through a real `Headers` (caller headers win; CSRF token added for mutating requests); `parseBody()` treats 204/205 and empty bodies as `undefined`; `ApiError` stays the only error type (commit 20:06:02Z).
+  - Added `frontend/src/lib/api.test.ts` covering `HeadersInit` variants, CSRF behavior, bodiless/empty responses, and error parsing.
+
+#### Deferred items (explicitly out of these PRs)
+
+- **alert-dialog** — `audiobook-manager/client` `DESIGN.md` documents the same mobile clip/overflow fix for `alert-dialog.tsx` as for `dialog.tsx`, but the component is not vendored or used yet; add it and apply the mobile fix when a destructive-confirmation use case appears.
+- **pagination** — `DESIGN.md` tells consumers to record a per-project pagination convention; consumers still hand-roll page state (e.g. `PAGE_SIZE` in `CleanBookUrls`) without recording the convention in DESIGN.md's project section. Standardizing pagination across consumers is deferred.
+- **API-types process** — the `src/lib/api-types.ts` regeneration differs per consumer (`generate-api-types` script in audiobook-manager, `generate:api-types` in prowlarr-watcher, only a bare `openapi-typescript` dependency in search-books with no script) and frontend-kit's "regenerate from the OpenAPI spec" is not one executable process. A consistent process/convention is deferred.
+- **query-key work** — TanStack Query key shapes and invalidation conventions vary between consumers (e.g. `["books", q, page, pageSize]` plus SignalR `OperationKeys` in audiobook-manager; `["search", activeQuery]` in search-books). A shared query-key strategy is deferred.
 
 ## Established findings used by this review
 
@@ -118,3 +155,13 @@ frontend-kit release tag:
   changed); MAINTENANCE.md baseline command is now `git describe --tags
   --abbrev=0`; plan now distinguishes `preset resolve` output (style `nova`)
   from the `components.json` value (`style: base-nova`).
+- 2026-09-16T19:26:20Z — Phase 2 done: frontend-kit `v0.2.10` tagged
+  (`f466526`).
+- 2026-09-17T15:15:24Z — Phase 2.5 done: `audiobook-manager` preset alignment
+  merged upstream (PR #1452).
+- 2026-09-17T21:43:07Z / 21:43:53Z / 21:44:32Z — Phase 3 implementation PRs
+  opened: audiobook-manager #1460, search-books #60, prowlarr-watcher #143
+  (all open, unmerged).
+- 2026-09-17T21:57:18Z — Phase 3 investigation and implementation status
+  recorded in this plan; consumer PRs marked open/not merged; deferred items
+  (alert-dialog, pagination, API-types process, query-key work) filed.
