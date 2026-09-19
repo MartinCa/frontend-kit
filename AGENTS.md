@@ -4,11 +4,11 @@ Instructions for AI agents working in the `MartinCa/frontend-kit` repository.
 
 ## Repository Overview
 
-`frontend-kit` is a shared conventions repository distributed through three channels:
+`frontend-kit` is a shared conventions repository distributed through these channels:
 
 1. **npm package (`@martinrun/frontend-config`)**: Shared ESLint flat preset (`eslint-preset.js`), Prettier config (`prettier.config.js`), and TypeScript base config (`tsconfig.base.json`).
-2. **shadcn registry (`registry.json`)**: Distributes `docs/DESIGN.md`, `docs/AGENTS.md`, and shared code (`src/lib/api.ts`, `src/lib/query.ts`, `src/styles/theme.css`, `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`).
-3. **Claude Code plugin (`plugins/frontend-conventions/`)**: Scaffolding command (`new-frontend.md`) and conventions skill (`SKILL.md`).
+2. **shadcn registry (`registry.json`)**: Distributes `docs/DESIGN.md`, `docs/AGENTS.md`, shared code (`src/lib/api.ts`, `src/lib/query.ts`, `src/styles/theme.css`, `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`), the vendored skill (`agent-skill`), and the OpenCode command files (`opencode-commands` — the top-level `opencode/` directory, OpenCode's adaptations of the plugin commands).
+3. **Claude Code plugin (`plugins/frontend-conventions/`)**: Scaffolding and migration commands (`commands/new-frontend.md`, `commands/migrate-ui.md`) and conventions skill (`SKILL.md`). OpenCode does not load this plugin; it reuses the skill from the consuming project's `.claude/skills/` (written by `agent-skill`) and reads adapted commands from the consuming project's `.opencode/commands/` (written by `opencode-commands`, or `~/.config/opencode/commands/` for a machine-wide copy).
 
 ## Mandatory Verification Before Opening PRs
 
@@ -50,6 +50,7 @@ Two hook tools must be on `PATH`: `betterleaks` (secret scan, install per its pr
 - **Skill updates require plugin version bumps**: When editing `plugins/frontend-conventions/skills/frontend-conventions/SKILL.md`, always bump the version in `plugins/frontend-conventions/.claude-plugin/plugin.json` in the same PR (see `docs/MAINTENANCE.md`).
 - **Registry authoring**: In `registry.json`, `registryDependencies` cannot point back into this same registry (bare names resolve against `ui.shadcn.com`). Bundle same-registry files directly in `files` (see `SETUP.md` Part 9).
 - **Template docs**: `docs/AGENTS.md` and `docs/DESIGN.md` are the distributed template conventions copied into downstream projects via `shadcn add`. When modifying house conventions, update them in `docs/` as well as `SETUP.md`, `plugins/`, and `docs/MIGRATION.md`.
+- **OpenCode command lockstep**: `opencode/commands/*.md` are adaptations of `plugins/frontend-conventions/commands/*.md` — change both together in one PR. `scripts/validate-manifests.mjs` fails if a shipped OpenCode command has no plugin sibling, and the same check keeps the `$PRESET` env-var placeholder out of OpenCode commands (OpenCode passes the preset as the command argument instead).
 - **Maintenance reviews keep a live plan**: while doing maintenance or consumer-alignment work, update `docs/PLAN.md` — phases, status, and exact UTC timestamps — as the work progresses. Reviews baseline from the last release tag (`git tag -l --sort=-version:refname`), not from what looks outdated.
 - **Do not widen the TypeScript peer range**: TypeScript is capped by typescript-eslint's official peer range (`>=4.8.4 <6.1.0`), not by this repo's declared `typescript >=5.5 <7`. ESLint 10 is supported. A blocked upgrade is a documentation change (`docs/MAINTENANCE.md`), never an edit to `peerDependencies` in `package.json`.
 - **Consumers align to the b0 preset**: the intended preset is `b0` (Base UI — `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide`). A consumer whose `components.json` records something else has drifted; `audiobook-manager/client` currently does and is queued in `docs/PLAN.md` Phase 2.5.

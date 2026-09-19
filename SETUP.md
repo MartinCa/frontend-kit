@@ -253,6 +253,23 @@ patterns, and registry workflows, and it knows which CLI flags to pass. It is th
 single highest-leverage thing for reducing agent mistakes, because the Base UI
 and Radix APIs differ and models routinely mix them.
 
+**OpenCode does not load Claude Code plugins.** To give an OpenCode session the
+same scaffolding and migration commands, install the adapted ones per project:
+
+```sh
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands
+```
+
+That writes `.opencode/commands/new-frontend.md` and
+`.opencode/commands/migrate-ui.md` (OpenCode accepts both `command/` and
+`commands/`; this repo uses the plural). For a machine-wide install instead,
+copy `opencode/commands/*.md` from this repo into
+`~/.config/opencode/commands/`. Run them as `/new-frontend <preset-code>`
+and `/migrate-ui` — the preset is the command argument, not a `$PRESET`
+environment variable. The conventions skill needs no second copy anywhere:
+OpenCode discovers `.claude/skills/` natively, so the Part 8 check-in covers
+both agents.
+
 ---
 
 ## Part 5 — Wire up the Renovate preset
@@ -319,7 +336,10 @@ pnpm add @tanstack/react-query @tanstack/react-router zustand \
 pnpm add -D @martinrun/frontend-config eslint prettier prettier-plugin-tailwindcss lefthook
 ```
 
-Or, with the plugin installed, just `/frontend-conventions:new-frontend`.
+Or, with the plugin installed, just `/frontend-conventions:new-frontend`. In
+OpenCode the equivalent is `/new-frontend <preset-code>` once the command files
+are in `.opencode/commands/` (Part 4) — the preset travels as the argument, not
+in the environment.
 
 Run those `pnpm add` commands as shown — with no version typed in — so
 pnpm resolves whatever is current today. `pnpm add` still writes a range
@@ -709,6 +729,25 @@ still one upstream source; re-run with `--overwrite` to refresh. `DESIGN.md` and
 Keep the marketplace install for the local terminal — it is nicer there and means
 one less committed file when you are working locally.
 
+### OpenCode
+
+OpenCode does not load Claude Code plugins, but it natively discovers
+`.claude/skills/`, so the check-in above already covers the skill — there is no
+second copy to vendor and no chance of the two drifting. What OpenCode needs
+extra is commands:
+
+```sh
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands
+```
+
+That writes `.opencode/commands/new-frontend.md` and
+`.opencode/commands/migrate-ui.md` (plural — OpenCode accepts both `command/`
+and `commands/`; this repo uses `commands/`). Commit them like the skill. They
+mirror the plugin's commands, with the preset passed as the `/new-frontend
+<code>` argument instead of a `$PRESET` environment variable. Re-run with
+`--overwrite` to refresh, in lockstep with the plugin command files (the
+validator fails if an OpenCode adaptation has no plugin sibling).
+
 ### What you probably do not need: network changes
 
 The Default environment carries no configuration of its own and uses **Trusted**
@@ -753,14 +792,15 @@ projects, public remains the right trade.
 
 ### Summary
 
-| Piece | Local terminal | Web / mobile |
-|---|---|---|
-| Conventions skill | plugin marketplace | vendored `.claude/skills/` — required |
-| `DESIGN.md` / `AGENTS.md` | registry | already in the clone |
-| Shared lint config | npm package | works, it is public on npmjs |
-| `pnpm install` | works | works on Trusted |
-| shadcn CLI | works | try Trusted first, Full if it fails |
-| Component `--diff` updates | yes | avoid; do these locally |
+| Piece | Local terminal (Claude) | Web / mobile (Claude) | OpenCode |
+|---|---|---|---|
+| Conventions skill | plugin marketplace | vendored `.claude/skills/` — required | same vendored `.claude/skills/` |
+| `new-frontend` / `migrate-ui` commands | plugin marketplace | n/a | vendored `.opencode/commands/` (`opencode-commands`) |
+| `DESIGN.md` / `AGENTS.md` | registry | already in the clone | already in the clone |
+| Shared lint config | npm package | works, it is public on npmjs | works |
+| `pnpm install` | works | works on Trusted | works |
+| shadcn CLI | works | try Trusted first, Full if it fails | works |
+| Component `--diff` updates | yes | avoid; do these locally | yes |
 
 ---
 

@@ -3,14 +3,21 @@
 Shared frontend conventions for personal projects. React + TypeScript +
 shadcn/ui + Tailwind.
 
-One repo, three distribution channels:
+One repo, three channels of distribution, plus the OpenCode consumption target:
 
 - **npm package** `@martinrun/frontend-config` — ESLint, tsconfig, Prettier.
   Updated by Renovate.
 - **shadcn registry** — `DESIGN.md`, the API client, query defaults, theme
-  tokens. Updated deliberately with `shadcn add --overwrite`.
-- **Claude Code plugin** — the conventions skill, so agents follow the rules
-  without a copy of the doc in every repo.
+  tokens, the vendored skill (`agent-skill`), and the OpenCode command
+  adaptations (`opencode-commands`). Updated deliberately with
+  `shadcn add --overwrite`.
+- **Claude Code plugin** — the conventions skill and the `new-frontend` /
+  `migrate-ui` commands, so agents follow the rules without a copy of the doc
+  in every repo.
+
+OpenCode is a consumption target, not a fourth channel: it loads the same
+vendored skill from `.claude/skills/` and reads the adapted commands from
+`.opencode/commands/`; it does not load Claude Code plugins.
 
 Start here: [SETUP.md](./SETUP.md). The rules themselves: [docs/DESIGN.md](./docs/DESIGN.md).
 
@@ -50,14 +57,19 @@ pnpm dlx shadcn@latest add MartinCa/frontend-kit/query-setup
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/theme-provider
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/agent-skill
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands
 ```
 
 `theme-provider` needs wiring, not just installing — wrap the app in
 `<ThemeProvider>` (SETUP.md Part 6) or dark mode never activates and nothing
 errors to say why. `agent-skill` vendors the conventions skill into
-`.claude/skills/` so Claude Code on web and mobile sees it; the marketplace
-install above only covers the local terminal. Full walkthrough in
-[SETUP.md](./SETUP.md).
+`.claude/skills/`, which both Claude Code cloud sessions and OpenCode load
+natively; the marketplace install above only covers the local Claude terminal.
+OpenCode additionally needs `opencode-commands` for the adapted
+`/new-frontend` and `/migrate-ui` commands. The registry installs above are
+project-scoped; to make the OpenCode commands available machine-wide instead,
+copy `opencode/commands/*.md` into `~/.config/opencode/commands/`. Full
+walkthrough in [SETUP.md](./SETUP.md).
 
 ## Changing a convention
 

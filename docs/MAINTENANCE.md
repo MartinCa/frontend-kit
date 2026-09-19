@@ -9,7 +9,7 @@ migration that looks more like [MIGRATION.md](./MIGRATION.md) than a diff.
 | What | How |
 |---|---|
 | ESLint/Prettier/tsconfig rule changes | Renovate opens a PR when `@martinrun/frontend-config` bumps. Patch/minor auto-merges (see `renovate-frontend.json`). |
-| Agent behavior (the conventions skill) | Local terminal: automatic on the next `claude plugin update` / marketplace refresh. Nothing to do per project. |
+| Agent behavior (the conventions skill + OpenCode commands) | Local Claude terminal: automatic on the next `claude plugin update` / marketplace refresh. OpenCode and cloud sessions: refresh the vendored registry files (`.claude/skills/…`, `.opencode/commands/…`) with `--overwrite` (below). |
 | Primitive libraries under shadcn components (Base UI/Radix) | Renovate groups and bumps them; review like any dependency PR. |
 
 If Renovate PRs for this repo stop appearing, that's the thing to check first
@@ -36,7 +36,11 @@ SETUP.md), refresh it the same way and commit:
 
 ```sh
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/agent-skill --overwrite
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands --overwrite
 ```
+
+The `opencode-commands` item is how OpenCode gets the adapted commands (it does
+not load the Claude plugin); refresh it alongside the skill.
 
 `--overwrite` is safe here specifically because these files aren't meant to be
 hand-edited (except DESIGN.md section 9, which lives at the bottom and rarely
@@ -225,3 +229,11 @@ hand-written range.
   still shows the same version — installed plugins have nothing to compare
   against, so the update may not reach machines that already have it. Bump the
   plugin version in the same PR as any skill change.
+- `opencode/commands/*.md` changed without
+  `plugins/frontend-conventions/commands/*.md` changing alongside it (or vice
+  versa) — the OpenCode adaptations and the Claude plugin commands are meant to
+  stay in lockstep. `scripts/validate-manifests.mjs` fails if the two command
+  sets are not in one-to-one name correspondence (a shipped OpenCode command
+  with no plugin sibling, or a plugin command with no OpenCode adaptation). The
+  check does not compare the two copies' prose, so both still have to be
+  updated together in one PR.

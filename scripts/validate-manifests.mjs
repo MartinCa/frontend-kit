@@ -114,8 +114,106 @@ if (!frontmatter) {
   }
 }
 
+// --- opencode command frontmatter ----------------------------------------
+// The OpenCode commands ship as a registry item, so a broken header or a leaked
+// Claude-only placeholder would reach every project that vendors them. They use
+// `$ARGUMENTS`, not the plugin commands' `$PRESET` env-var convention.
+const opencodeCommandDir = "opencode/commands";
+const pluginCommandDir = "plugins/frontend-conventions/commands";
+
+// Registered command paths, deduplicated in case one item bundles the same path
+// twice. These are the paths that actually ship to consumers.
+const shippedOpenCodeCommands = new Set();
+for (const item of registry.items) {
+  for (const file of item.files ?? []) {
+    if (/^opencode\/commands\/[^/]+\.md$/.test(file.path)) shippedOpenCodeCommands.add(file.path);
+  }
+}
+
+// An empty set means the `opencode-commands` item was removed or renamed and the
+// whole adaptation silently stopped landing in consumers.
+if (shippedOpenCodeCommands.size === 0) {
+  fail(
+    `opencode: no command files are registered in registry.json; ` +
+      `the opencode-commands item must ship at least one opencode/commands/*.md`,
+  );
+}
+
+// The on-disk command files are the source of truth for what ships: an
+// unregistered adaptation drops silently out of the item, and a registered path
+// that is not on disk ships nothing (the generic file-exists check above also
+// catches it, less clearly).
+const diskOpenCodeCommands = new Set(
+  fs.existsSync(opencodeCommandDir)
+    ? fs
+        .readdirSync(opencodeCommandDir)
+        .filter((entry) => entry.endsWith(".md"))
+        .map((entry) => `${opencodeCommandDir}/${entry}`)
+    : [],
+);
+for (const commandPath of diskOpenCodeCommands) {
+  if (!shippedOpenCodeCommands.has(commandPath)) {
+    fail(`opencode: ${commandPath} is on disk but not registered in registry.json`);
+  }
+}
+for (const commandPath of shippedOpenCodeCommands) {
+  if (!diskOpenCodeCommands.has(commandPath)) {
+    fail(`opencode: ${commandPath} is registered in registry.json but not on disk`);
+  }
+}
+
+// The OpenCode adaptations and the Claude plugin commands must be in one-to-one
+// name correspondence. This checks existence only — the two copies' prose is
+// not compared, so both still have to be updated together.
+const pluginCommands = new Set(
+  fs.existsSync(pluginCommandDir)
+    ? fs
+        .readdirSync(pluginCommandDir)
+        .filter((entry) => entry.endsWith(".md"))
+        .map((entry) => `${pluginCommandDir}/${entry}`)
+    : [],
+);
+for (const commandPath of shippedOpenCodeCommands) {
+  const canary = `${pluginCommandDir}/${path.basename(commandPath)}`;
+  if (!pluginCommands.has(canary)) {
+    fail(
+      `opencode: ${commandPath} is shipped but has no plugin sibling ${canary}; ` +
+        `the OpenCode adaptations must change in lockstep with the Claude plugin commands`,
+    );
+  }
+}
+for (const pluginCommandPath of pluginCommands) {
+  const adaptation = `${opencodeCommandDir}/${path.basename(pluginCommandPath)}`;
+  if (!shippedOpenCodeCommands.has(adaptation)) {
+    fail(
+      `opencode: plugin command ${pluginCommandPath} has no shipped OpenCode adaptation ` +
+        `${adaptation}; a new Claude plugin command must ship an OpenCode adaptation in the same PR`,
+    );
+  }
+}
+
+for (const commandPath of shippedOpenCodeCommands) {
+  if (!fs.existsSync(commandPath)) continue; // registered but missing — reported by the disk/registered comparison above
+  const source = fs.readFileSync(commandPath, "utf8");
+  const commandFrontmatter = /^---\n([\s\S]*?)\n---\n/.exec(source);
+  if (!commandFrontmatter) {
+    fail(`opencode: ${commandPath} has no YAML frontmatter block`);
+  } else if (!new RegExp("^description:\\s*\\S", "m").test(commandFrontmatter[1])) {
+    fail(`opencode: ${commandPath} frontmatter is missing a non-empty "description"`);
+  }
+  if (source.includes("$PRESET")) {
+    fail(
+      `opencode: ${commandPath} contains the Claude-only "$PRESET" placeholder; ` +
+        `OpenCode passes the preset as the command argument instead`,
+    );
+  }
+}
+
 if (problems.length > 0) {
   for (const problem of problems) console.error(problem);
   process.exit(1);
 }
-console.log(`ok: ${registry.items.length} registry items, ${marketplace.plugins.length} plugin(s)`);
+console.log(
+  `ok: ${registry.items.length} registry items, ${marketplace.plugins.length} plugin(s), ` +
+    `${shippedOpenCodeCommands.size} opencode command(s)`,
+);
