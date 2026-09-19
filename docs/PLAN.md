@@ -136,7 +136,9 @@ open as future work:
   (app-owned dialog shell and confirmation wrappers), #1455 (centralized
   TanStack Query keys and invalidation factories).
 - frontend-kit #58 — OpenCode compatibility for the frontend-kit conventions
-  (the Claude plugin does not extend OpenCode).
+  (the Claude plugin does not extend OpenCode). **Addressed**: the
+  `opencode-commands` registry item and the adapted `opencode/commands/*.md`
+  files — see the change-log entry below.
 
 These are follow-ups; none of them is part of Phase 3.
 
@@ -195,3 +197,12 @@ Phase 3 is complete.
   `acbe3cc` shipped with green CI; Phase 3 marked done; deferred items retained
   and issue follow-ups (#1453/#1454/#1455, frontend-kit #58) recorded as future
   work, not Phase 3.
+- 2026-09-19T12:29:55Z — OpenCode compatibility shipped (frontend-kit #58).
+  New `opencode-commands` registry item (`opencode/commands/*.md`) vendors
+  adapted `new-frontend` and `migrate-ui` commands into the consumer's
+  `.opencode/commands/` — plural, correcting the issue's singular `command/`
+  assumption. OpenCode reuses the existing conventions skill via the
+  `.claude/skills/` path the `agent-skill` item already writes, so there is no
+  second skill copy to drift. Validator now requires description frontmatter on
+  OpenCode commands, rejects the Claude-only `$PRESET` placeholder, and enforces
+  the Claude↔OpenCode command lockstep.

@@ -167,16 +167,20 @@ Then, incrementally:
   for hex codes and raw Tailwind color utilities (`bg-blue-500` etc.) to find
   the backlog; it does not need to be zero on day one.
 
-## 5. Cloud sessions (Claude Code on web/mobile)
+## 5. Cloud sessions and OpenCode
 
 ```sh
 pnpm dlx shadcn@latest add MartinCa/frontend-kit/agent-skill
+pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands
 ```
 
-Commit the resulting `.claude/skills/frontend-conventions/SKILL.md`. Without
-this, agents running in an ephemeral cloud sandbox never see the conventions —
-`AGENTS.md`/`DESIGN.md` are enough for terminal sessions but the skill is what
-web/mobile actually loads.
+Commit the resulting `.claude/skills/frontend-conventions/SKILL.md` and the
+`.opencode/commands/` files. Without the skill, agents running in an ephemeral
+cloud sandbox never see the conventions — `AGENTS.md`/`DESIGN.md` are enough
+for terminal sessions but the skill is what Claude Code web/mobile actually
+loads. The same `.claude/skills/` path serves OpenCode, which discovers it
+natively; OpenCode ignores Claude Code plugins, so the `new-frontend` and
+`migrate-ui` commands come from the `opencode-commands` item instead.
 
 ## 6. Renovate
 
@@ -221,8 +225,8 @@ makes future updates cheap (DESIGN.md section 3).
 
 ## Agent prompts
 
-Paste these into Claude Code (terminal or web) at the root of the repo you're
-migrating. The prompts are modular:
+Paste these into Claude Code (terminal or web) or OpenCode at the root of the
+repo you're migrating. The prompts are modular:
 
 - **Prompt 1: Base migration (foundation)** — Sets up config, conventions,
   `shadcn init`, and shared libraries. Safe and non-destructive on its own.
@@ -276,8 +280,10 @@ it. In short:
    to perform a full data/UI migration, do not rewrite existing data-fetching code
    in this pass — just make the shared client available for new code and flag
    files that should eventually move over.
-6. Install MartinCa/frontend-kit/agent-skill so cloud sessions see the
-   conventions, and commit it.
+6. Install MartinCa/frontend-kit/agent-skill and
+   MartinCa/frontend-kit/opencode-commands so cloud sessions (Claude Code on
+   web and mobile) and OpenCode see the conventions and the adapted commands,
+   and commit them.
 7. Add "github>MartinCa/frontend-kit:renovate-frontend" to this repo's
    Renovate config, alongside the base "github>MartinCa/renovate-config"
    preset — not replacing it or anything else already in the extends array.
@@ -349,7 +355,9 @@ Execute this migration in two phases:
 4. If components.json does not exist, run `shadcn init` (ask for preset code if not recorded).
 5. Install MartinCa/frontend-kit/api-client, /query-setup, /theme, and /theme-provider.
    Ensure `<ThemeProvider>` is mounted in the root provider tree (`main.tsx`).
-6. Install MartinCa/frontend-kit/agent-skill and add
+6. Install MartinCa/frontend-kit/agent-skill and /opencode-commands (OpenCode
+   does not load Claude plugins but reads the skill from the same
+   .claude/skills/ path) and add
    "github>MartinCa/frontend-kit:renovate-frontend" to Renovate config.
 
 --- PHASE 2: FULL UI MIGRATION ---

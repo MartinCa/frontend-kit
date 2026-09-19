@@ -25,12 +25,30 @@
       "name": "agent-skill",
       "type": "registry:file",
       "title": "Conventions skill (project-scope)",
-      "description": "Checks the conventions skill into the repo so it loads in ephemeral cloud sandboxes (Claude Code on web and mobile) with no install step.",
+      "description": "Checks the conventions skill into the repo so it loads in ephemeral cloud sandboxes (Claude Code on web and mobile) and in OpenCode, which natively discovers .claude/skills/.",
       "files": [
         {
           "path": "plugins/frontend-conventions/skills/frontend-conventions/SKILL.md",
           "type": "registry:file",
           "target": "~/.claude/skills/frontend-conventions/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "opencode-commands",
+      "type": "registry:file",
+      "title": "OpenCode commands (project-scope)",
+      "description": "Adapted new-frontend and migrate-ui commands for OpenCode, which does not load Claude Code plugins. Install alongside agent-skill — OpenCode natively reads the .claude/skills/ path that item writes.",
+      "files": [
+        {
+          "path": "opencode/commands/new-frontend.md",
+          "type": "registry:file",
+          "target": "~/.opencode/commands/new-frontend.md"
+        },
+        {
+          "path": "opencode/commands/migrate-ui.md",
+          "type": "registry:file",
+          "target": "~/.opencode/commands/migrate-ui.md"
         }
       ]
     },

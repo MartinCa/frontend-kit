@@ -114,8 +114,45 @@ if (!frontmatter) {
   }
 }
 
+// --- opencode command frontmatter ----------------------------------------
+// The OpenCode commands ship as a registry item, so a broken header or a leaked
+// Claude-only placeholder would reach every project that vendors them. They use
+// `$ARGUMENTS`, not the plugin commands' `$PRESET` env-var convention.
+const opencodeCommands = [];
+for (const item of registry.items) {
+  for (const file of item.files ?? []) {
+    if (/^opencode\/commands\/[^/]+\.md$/.test(file.path)) opencodeCommands.push(file.path);
+  }
+}
+
+for (const commandPath of opencodeCommands) {
+  const source = fs.readFileSync(commandPath, "utf8");
+  const commandFrontmatter = /^---\n([\s\S]*?)\n---\n/.exec(source);
+  if (!commandFrontmatter) {
+    fail(`opencode: ${commandPath} has no YAML frontmatter block`);
+  } else if (!new RegExp("^description:\\s*\\S", "m").test(commandFrontmatter[1])) {
+    fail(`opencode: ${commandPath} frontmatter is missing a non-empty "description"`);
+  }
+  if (source.includes("$PRESET")) {
+    fail(
+      `opencode: ${commandPath} contains the Claude-only "$PRESET" placeholder; ` +
+        `OpenCode passes the preset as the command argument instead`,
+    );
+  }
+  const canary = `plugins/frontend-conventions/commands/${path.basename(commandPath)}`;
+  if (!fs.existsSync(canary)) {
+    fail(
+      `opencode: ${commandPath} has no plugin sibling ${canary}; ` +
+        `the OpenCode adaptations must change in lockstep with the Claude plugin commands`,
+    );
+  }
+}
+
 if (problems.length > 0) {
   for (const problem of problems) console.error(problem);
   process.exit(1);
 }
-console.log(`ok: ${registry.items.length} registry items, ${marketplace.plugins.length} plugin(s)`);
+console.log(
+  `ok: ${registry.items.length} registry items, ${marketplace.plugins.length} plugin(s), ` +
+    `${opencodeCommands.length} opencode command(s)`,
+);
