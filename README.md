@@ -3,7 +3,7 @@
 Shared frontend conventions for personal projects. React + TypeScript +
 shadcn/ui + Tailwind.
 
-One repo, four distribution channels:
+One repo, three channels of distribution, plus the OpenCode consumption target:
 
 - **npm package** `@martinrun/frontend-config` — ESLint, tsconfig, Prettier.
   Updated by Renovate.
@@ -14,9 +14,10 @@ One repo, four distribution channels:
 - **Claude Code plugin** — the conventions skill and the `new-frontend` /
   `migrate-ui` commands, so agents follow the rules without a copy of the doc
   in every repo.
-- **OpenCode** — loads the same vendored skill from `.claude/skills/` and reads
-  the adapted commands from `.opencode/commands/`; it does not load Claude Code
-  plugins.
+
+OpenCode is a consumption target, not a fourth channel: it loads the same
+vendored skill from `.claude/skills/` and reads the adapted commands from
+`.opencode/commands/`; it does not load Claude Code plugins.
 
 Start here: [SETUP.md](./SETUP.md). The rules themselves: [docs/DESIGN.md](./docs/DESIGN.md).
 
@@ -62,7 +63,7 @@ pnpm dlx shadcn@latest add MartinCa/frontend-kit/opencode-commands
 `theme-provider` needs wiring, not just installing — wrap the app in
 `<ThemeProvider>` (SETUP.md Part 6) or dark mode never activates and nothing
 errors to say why. `agent-skill` vendors the conventions skill into
-`.claude/skills/`, which BOTH Claude Code cloud sessions and OpenCode load
+`.claude/skills/`, which both Claude Code cloud sessions and OpenCode load
 natively; the marketplace install above only covers the local Claude terminal.
 OpenCode additionally needs `opencode-commands` for the adapted
 `/new-frontend` and `/migrate-ui` commands. The registry installs above are

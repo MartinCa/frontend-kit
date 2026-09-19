@@ -15,7 +15,7 @@ Follow these steps in order:
    - If `components.json` does not exist, run `pnpm dlx shadcn@latest init` (ask for the preset code if not already recorded).
    - Ensure `MartinCa/frontend-kit/conventions`, `api-client`, `query-setup`, `theme`, and `theme-provider` are installed.
    - Ensure `@martinrun/frontend-config` is wired up in `eslint.config.js`, `prettier.config.js`, and `tsconfig.json`.
-   - Ensure `<ThemeProvider>` from `@/components/theme-provider` wraps the application root (e.g. `main.tsx`).
+   - Ensure `<ThemeProvider>` from `src/components/theme-provider.tsx` wraps the application root (e.g. `main.tsx`).
 
 3. **Install Required shadcn/ui Primitives**:
    - For all needed primitives (button, dialog, dropdown-menu, input, table, etc.), install via:

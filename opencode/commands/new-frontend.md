@@ -28,7 +28,7 @@ running validation steps (`pnpm run lint`, `pnpm run format-check`, `tsc --noEmi
 does not ignore `src/routeTree.gen.ts` — it is a committed vendored contract file
 required for type-aware linting on fresh clones.
 
-Wrap the app in `<ThemeProvider>` from `@/components/theme-provider` in
+Wrap the app in `<ThemeProvider>` from `src/components/theme-provider.tsx` in
 `main.tsx` (see SETUP.md Part 6). This step is easy to skip because the app
 renders fine either way — it just always renders light, since `theme.css`'s
 `.dark` class is never toggled without it, regardless of the system

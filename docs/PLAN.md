@@ -204,5 +204,7 @@ Phase 3 is complete.
   assumption. OpenCode reuses the existing conventions skill via the
   `.claude/skills/` path the `agent-skill` item already writes, so there is no
   second skill copy to drift. Validator now requires description frontmatter on
-  OpenCode commands, rejects the Claude-only `$PRESET` placeholder, and enforces
-  the Claude↔OpenCode command lockstep.
+  OpenCode commands, rejects the Claude-only `$PRESET` placeholder, and fails
+  unless the registered OpenCode command files and the Claude plugin command
+  files are in one-to-one name correspondence (existence only — the two copies'
+  prose is not compared).

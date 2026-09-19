@@ -232,5 +232,8 @@ hand-written range.
 - `opencode/commands/*.md` changed without
   `plugins/frontend-conventions/commands/*.md` changing alongside it (or vice
   versa) — the OpenCode adaptations and the Claude plugin commands are meant to
-  stay in lockstep. `scripts/validate-manifests.mjs` fails if a shipped OpenCode
-  command has no plugin sibling, so this only slips in if the canary is bypassed.
+  stay in lockstep. `scripts/validate-manifests.mjs` fails if the two command
+  sets are not in one-to-one name correspondence (a shipped OpenCode command
+  with no plugin sibling, or a plugin command with no OpenCode adaptation). The
+  check does not compare the two copies' prose, so both still have to be
+  updated together in one PR.
