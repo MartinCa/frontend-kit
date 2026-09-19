@@ -8,7 +8,7 @@ Instructions for AI agents working in the `MartinCa/frontend-kit` repository.
 
 1. **npm package (`@martinrun/frontend-config`)**: Shared ESLint flat preset (`eslint-preset.js`), Prettier config (`prettier.config.js`), and TypeScript base config (`tsconfig.base.json`).
 2. **shadcn registry (`registry.json`)**: Distributes `docs/DESIGN.md`, `docs/AGENTS.md`, shared code (`src/lib/api.ts`, `src/lib/query.ts`, `src/styles/theme.css`, `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`), the vendored skill (`agent-skill`), and the OpenCode command files (`opencode-commands` — the top-level `opencode/` directory, OpenCode's adaptations of the plugin commands).
-3. **Claude Code plugin (`plugins/frontend-conventions/`)**: Scaffolding and migration commands (`commands/new-frontend.md`, `commands/migrate-ui.md`) and conventions skill (`SKILL.md`). OpenCode does not load this plugin; it reuses the skill via `.claude/skills/` and reads the adapted commands from `opencode/`.
+3. **Claude Code plugin (`plugins/frontend-conventions/`)**: Scaffolding and migration commands (`commands/new-frontend.md`, `commands/migrate-ui.md`) and conventions skill (`SKILL.md`). OpenCode does not load this plugin; it reuses the skill from the consuming project's `.claude/skills/` (written by `agent-skill`) and reads adapted commands from the consuming project's `.opencode/commands/` (written by `opencode-commands`, or `~/.config/opencode/commands/` for a machine-wide copy).
 
 ## Mandatory Verification Before Opening PRs
 

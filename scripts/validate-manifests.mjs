@@ -193,7 +193,7 @@ for (const pluginCommandPath of pluginCommands) {
 }
 
 for (const commandPath of shippedOpenCodeCommands) {
-  if (!fs.existsSync(commandPath)) continue; // registered but missing — m3 above reports it
+  if (!fs.existsSync(commandPath)) continue; // registered but missing — reported by the disk/registered comparison above
   const source = fs.readFileSync(commandPath, "utf8");
   const commandFrontmatter = /^---\n([\s\S]*?)\n---\n/.exec(source);
   if (!commandFrontmatter) {
