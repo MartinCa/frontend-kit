@@ -49,7 +49,7 @@
   "devDependencies": {
     "eslint": "10.10.0",
     "lefthook": "2.1.14",
-    "prettier": "3.9.6",
+    "prettier": "3.9.8",
     "prettier-plugin-tailwindcss": "0.8.1",
     "typescript": "6.0.3"
   }
