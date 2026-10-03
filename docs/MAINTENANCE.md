@@ -163,21 +163,21 @@ bundled with unrelated work: `add <component> --overwrite`, resolved with git.
 
 ### Preset alignment
 
-Every consumer should sit on the same intended preset as this repo: `b0`
+Every consumer should sit on the same intended preset as this repo: `b18OWG`
 (Base UI — `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` in
 `components.json`). `preset resolve` shows which preset a project is really on.
 Realignment is deliberate, cheap, and can be scoped:
 
 ```sh
-pnpm dlx shadcn@latest apply --preset b0
-pnpm dlx shadcn@latest apply --preset b0 --only theme,font   # targeted
+pnpm dlx shadcn@latest apply --preset b18OWG
+pnpm dlx shadcn@latest apply --preset b18OWG --only theme,font   # targeted
 ```
 
-`init --preset b0` does the same for a project that was never on a preset.
-Known drift is tracked in [PLAN.md](./PLAN.md): `audiobook-manager/client` is
-currently on the old default scaffold (`style: default`, `baseColor: slate`)
-and is queued for alignment in Phase 2.5 — after the frontend-kit changes land,
-before the general consumer review.
+`init --preset b18OWG` does the same for a project that was never on a preset.
+Known drift is tracked in [PLAN.md](./PLAN.md). The earlier drift
+(`audiobook-manager/client` on the old default scaffold, `style: default` /
+`baseColor: slate`) was fixed in Phase 2.5 (audiobook-manager PR #1452); all
+consumers now record `style: base-nova` and `baseColor: neutral`.
 
 ### Exact timestamps
 
@@ -209,7 +209,7 @@ hand-written range.
   Renovate PR — someone's disabling rules instead of fixing them, or the
   config package fell behind.
 - `shadcn preset resolve` reporting a different style/baseColor than the
-  intended `b0` preset — the project was scaffolded off-preset or re-inited
+  intended `b18OWG` preset — the project was scaffolded off-preset or re-inited
   elsewhere; that is a Phase 2.5-style alignment, not a dependency bump.
 - `git diff` after an `--overwrite` touching more than DESIGN.md section 9 —
   a supposedly-vendored file was hand-edited.

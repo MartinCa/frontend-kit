@@ -18,10 +18,10 @@ review and is expected to change as it moves.
 
 | Repository | Role | Preset state |
 |---|---|---|
-| `frontend-kit` | the kit itself | preset `b0` (README); peer range `typescript >=5.5 <7` |
-| `search-books` | consumer | preset `b0` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
-| `prowlarr-watcher/frontend` | consumer | preset `b0` — same state as `search-books` |
-| `audiobook-manager/client` | consumer | **aligned** — `b0`/Base UI since Phase 2.5 (PR #1452) |
+| `frontend-kit` | the kit itself | preset `b18OWG` (README; was `b0` before the amber theme change); peer range `typescript >=5.5 <7` |
+| `search-books` | consumer | preset `b0` until its theme-change PR merges, then `b18OWG` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
+| `prowlarr-watcher/frontend` | consumer | preset `b0` until its theme-change PR merges, then `b18OWG` — same state as `search-books` |
+| `audiobook-manager/client` | consumer | **aligned** — Base UI since Phase 2.5 (PR #1452); amber theme already trialled, final sync pending the kit release |
 
 ## Phases
 
@@ -208,3 +208,21 @@ Phase 3 is complete.
   unless the registered OpenCode command files and the Claude plugin command
   files are in one-to-one name correspondence (existence only — the two copies'
   prose is not compared).
+
+## Theme change: amber accent (preset `b18OWG`)
+
+Origin: `audiobook-manager/client` trialled the `b18OWG` preset's amber accent
+(was the `b1PzeK` blue). `preset decode` shows the three codes `b0` (neutral),
+`b1PzeK` (blue) and `b18OWG` (amber) differ only in `theme`; the amber theme
+sets `--primary`, `--primary-foreground`, `--sidebar-primary` and
+`--sidebar-primary-foreground` (light and dark). `b18OWG` is now the kit's
+default preset.
+
+| Step | What | Status |
+|---|---|---|
+| T1. frontend-kit | `theme.css` carries the amber tokens (incl. sidebar-primary); preset code `b18OWG` in README/SETUP/MAINTENANCE/AGENTS/OpenCode command | in review |
+| T1b. Radius | `--radius` aligned to the preset default `0.625rem` (was `0.5rem` in the kit, with `search-books`/`prowlarr-watcher` overriding it locally); local overrides dropped | in review |
+| T2. Release | Tag the next `vX.Y.Z` | pending |
+| T3. audiobook-manager/client | Re-sync `theme.css`; drop trial comment and sidebar-primary duplicates from `index.css` | pending |
+| T4. search-books | Re-sync `theme.css`; drop sidebar-primary duplicates | pending |
+| T5. prowlarr-watcher/frontend | Adopt shared `theme.css` (tokens were inlined in `index.css`); drop duplicates | pending |
