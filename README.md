@@ -29,15 +29,15 @@ The current maintenance review, cross-repo, with its live status:
 
 ## Preset
 
-Design system preset code: `b0`
+Design system preset code: `b18OWG`
 
 This is the one manual step in the whole kit — the code is generated
 interactively and can't be scripted. Go to `ui.shadcn.com/create` and pick:
-**Base UI** primitives, **neutral** base color, **new-york** style, default
-radius (0.5rem), **lucide-react** icons. That reproduces the modern shadcn
-default already baked into `src/styles/theme.css` in this repo, so picking it
-now doesn't change anything for projects that predate the preset — it just
-gives you the short code to hand to new projects and agents. Change any of
+**Base UI** primitives, **neutral** base color, **amber** theme (the orange
+accent), **nova** style, default radius, **lucide-react** icons. That
+reproduces what is baked into `src/styles/theme.css` in this repo — the
+neutral palette with an amber `--primary` and `--sidebar-primary` — and gives
+you the short code to hand to new projects and agents. Change any of
 those choices later; re-running `init --preset` on an existing app is cheap
 (see SETUP.md Part 3).
 

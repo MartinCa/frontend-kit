@@ -208,3 +208,20 @@ Phase 3 is complete.
   unless the registered OpenCode command files and the Claude plugin command
   files are in one-to-one name correspondence (existence only — the two copies'
   prose is not compared).
+
+## Theme change: amber accent (preset `b18OWG`)
+
+Origin: `audiobook-manager/client` trialled the `b18OWG` preset's amber accent
+(was the `b1PzeK` blue). `preset decode` shows the three codes `b0` (neutral),
+`b1PzeK` (blue) and `b18OWG` (amber) differ only in `theme`; the amber theme
+sets `--primary`, `--primary-foreground`, `--sidebar-primary` and
+`--sidebar-primary-foreground` (light and dark). `b18OWG` is now the kit's
+default preset.
+
+| Step | What | Status |
+|---|---|---|
+| T1. frontend-kit | `theme.css` carries the amber tokens (incl. sidebar-primary); preset code `b18OWG` in README/SETUP/MAINTENANCE/AGENTS/OpenCode command | in review |
+| T2. Release | Tag the next `vX.Y.Z` | pending |
+| T3. audiobook-manager/client | Re-sync `theme.css`; drop trial comment and sidebar-primary duplicates from `index.css` | pending |
+| T4. search-books | Re-sync `theme.css`; drop sidebar-primary duplicates | pending |
+| T5. prowlarr-watcher/frontend | Adopt shared `theme.css` (tokens were inlined in `index.css`); drop duplicates | pending |
