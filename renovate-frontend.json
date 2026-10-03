@@ -21,7 +21,7 @@
     {
       "description": "Primitives are pulled in by shadcn components; bump them together and review as one",
       "groupName": "ui primitives",
-      "matchPackageNames": ["/^@base-ui-components//", "/^@radix-ui//"]
+      "matchPackageNames": ["/^@base-ui-components//", "/^@base-ui//", "/^@radix-ui//"]
     },
     {
       "description": "Tooling churns; batch it weekly rather than PR-per-bump",

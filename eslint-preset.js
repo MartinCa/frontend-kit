@@ -79,7 +79,7 @@ export default function config({ ignores = [] } = {}) {
                   "Use the @/ alias instead of walking up more than one level. See DESIGN.md section 4.",
               },
               {
-                group: ["@radix-ui/*", "@base-ui-components/*"],
+                group: ["@radix-ui/*", "@base-ui-components/*", "@base-ui/*"],
                 message:
                   "Import primitives from @/components/ui/* instead. Direct primitive imports bypass the design system. See DESIGN.md section 3.",
               },
