@@ -279,6 +279,11 @@ const { status, run } = useAsyncAction(grab);
   disables the button; success / error tint the **same icon** with `text-status-ok` /
   `text-status-error`. The tint stays until the next click or until the button unmounts —
   navigating away or changing context resets it. Nothing is persisted.
+- Icon-only is the default (row actions, tables). For a primary action that has room for a
+  verb, pass children as visible text: `<ActionButton icon={EyeOffIcon} status={status}
+  onClick={...}>Ignore</ActionButton>`. The size defaults to `sm`, the icon still carries the
+  spinner and result tint, and the visible text is the accessible name (`label` becomes an
+  optional tooltip). Icon-only requires `label`.
 - Colour is never the only signal: pass `resultLabel` so the accessible name and tooltip
   change, and report the outcome in a toast.
 - When the status comes from elsewhere (a mutation plus a polled job), derive an

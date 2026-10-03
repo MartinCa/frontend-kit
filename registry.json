@@ -156,7 +156,7 @@
       "name": "action-button",
       "type": "registry:component",
       "title": "Action button + useAsyncAction",
-      "description": "Icon button with idle / spinner / green-or-red result states that persist until the next click, plus the useAsyncAction hook that drives it. Pair with the toast item for the result text. Bundles the hook because a registry item cannot reference another item in this registry.",
+      "description": "Icon button (or icon + text button when given children) with idle / spinner / green-or-red result states that persist until the next click, plus the useAsyncAction hook that drives it. Pair with the toast item for the result text. Bundles the hook because a registry item cannot reference another item in this registry.",
       "registryDependencies": ["button"],
       "dependencies": ["lucide-react"],
       "files": [
