@@ -221,6 +221,7 @@ default preset.
 | Step | What | Status |
 |---|---|---|
 | T1. frontend-kit | `theme.css` carries the amber tokens (incl. sidebar-primary); preset code `b18OWG` in README/SETUP/MAINTENANCE/AGENTS/OpenCode command | in review |
+| T1b. Radius | `--radius` aligned to the preset default `0.625rem` (was `0.5rem` in the kit, with `search-books`/`prowlarr-watcher` overriding it locally); local overrides dropped | in review |
 | T2. Release | Tag the next `vX.Y.Z` | pending |
 | T3. audiobook-manager/client | Re-sync `theme.css`; drop trial comment and sidebar-primary duplicates from `index.css` | pending |
 | T4. search-books | Re-sync `theme.css`; drop sidebar-primary duplicates | pending |
