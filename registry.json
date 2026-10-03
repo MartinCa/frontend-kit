@@ -138,7 +138,7 @@
       "title": "Toast + notifications",
       "description": "Base UI toast wrapper (<Toaster/> mounted once at the app root) and a notifications.success/error/info/warning facade. Errors default to a 10s timeout; pass { persistent: true } to keep a toast until dismissed. Requires the theme tokens and an app-level <Toaster />.",
       "registryDependencies": ["button"],
-      "dependencies": ["@base-ui/react", "lucide-react"],
+      "dependencies": ["@base-ui/react", "cn", "lucide-react"],
       "files": [
         {
           "path": "src/components/ui/toast.tsx",
@@ -158,7 +158,7 @@
       "title": "Action button + useAsyncAction",
       "description": "Icon button (or icon + text button when given children) with idle / spinner / green-or-red result states that persist until the next click, plus the useAsyncAction hook that drives it. Pair with the toast item for the result text. Bundles the hook because a registry item cannot reference another item in this registry.",
       "registryDependencies": ["button"],
-      "dependencies": ["lucide-react"],
+      "dependencies": ["cn", "lucide-react"],
       "files": [
         {
           "path": "src/components/action-button.tsx",
