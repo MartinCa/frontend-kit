@@ -283,9 +283,11 @@ const { status, run } = useAsyncAction(grab);
   verb, pass children as visible text: `<ActionButton icon={EyeOffIcon} status={status}
   onClick={...}>Ignore</ActionButton>`. The size defaults to `sm`, the icon still carries the
   spinner and result tint, and the visible text is the accessible name (`label` becomes an
-  optional tooltip). Icon-only requires `label`.
-- Colour is never the only signal: pass `resultLabel` so the accessible name and tooltip
-  change, and report the outcome in a toast.
+  optional tooltip). Icon-only requires `label`. Children must be real content: `false`, `null`
+  and `""` are not text (the first two are a type error, an empty string falls back to icon-only).
+- Colour is never the only signal: report the outcome in a toast. In icon-only mode also pass
+  `resultLabel` so the accessible name and tooltip change; in text mode the visible text stays
+  the accessible name, so `resultLabel` only updates the tooltip and the toast carries the result.
 - When the status comes from elsewhere (a mutation plus a polled job), derive an
   `ActionStatus` (`"idle" | "pending" | "success" | "error"`) and pass it to `<ActionButton>`
   directly; `useAsyncAction` is only for plain promises. The two parts are deliberately

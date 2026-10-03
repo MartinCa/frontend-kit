@@ -9,7 +9,10 @@ type ActionButtonBaseProps = Omit<ComponentProps<typeof Button>, "children"> & {
   /** The button's resting icon (a lucide icon component). It stays visible after the action, tinted by the result. */
   icon: ElementType<{ className?: string; "aria-hidden"?: boolean }>;
   status?: ActionStatus;
-  /** Replaces `label` in the accessible name and tooltip after a result, e.g. "Sent to qBittorrent". */
+  /**
+   * Replaces `label` after a result, e.g. "Sent to qBittorrent". Icon-only: updates the accessible
+   * name and tooltip. Text mode: the visible text stays the accessible name, so only the tooltip changes.
+   */
   resultLabel?: string;
 };
 
@@ -22,7 +25,8 @@ type ActionButtonProps = ActionButtonBaseProps &
       }
     | {
         /** Visible text next to the icon ("Ignore"). It is the accessible name, so `label` is optional. */
-        children: ReactNode;
+        // No `boolean`/`null`/`undefined`: `{canIgnore && "Ignore"}` must be a type error, not a nameless button.
+        children: Exclude<ReactNode, boolean | null | undefined>;
         /** Optional tooltip; after a result, `resultLabel` replaces it. Never sets the accessible name (the visible text does). */
         label?: string;
       }
@@ -40,8 +44,9 @@ const statusTint: Record<ActionStatus, string | undefined> = {
  * spinner (same size, no layout shift), and a result tints the icon green or red until the next
  * click or until the button unmounts. In text mode the visible text is the accessible name and the
  * icon carries the spinner/tint. Put the result *text* in a toast (`notifications`), not
- * next to the button. Colour is not the only signal: `resultLabel` updates the accessible name
- * and tooltip, and `data-status` is exposed for styling and tests.
+ * next to the button. Colour is not the only signal: in icon-only mode `resultLabel` updates the
+ * accessible name and tooltip (in text mode only the tooltip, as the visible text stays the name),
+ * and `data-status` is exposed for styling and tests.
  */
 export function ActionButton({
   icon: Icon,
@@ -56,7 +61,9 @@ export function ActionButton({
   ...props
 }: ActionButtonProps) {
   const pending = status === "pending";
-  const hasText = children !== undefined && children !== null && children !== false;
+  // An empty string renders no text, so it counts as icon-only (and gets `aria-label`) rather than an unnamed button.
+  const hasText =
+    children !== undefined && children !== null && typeof children !== "boolean" && children !== "";
   const name = (status === "success" || status === "error") && resultLabel ? resultLabel : label;
 
   return (
