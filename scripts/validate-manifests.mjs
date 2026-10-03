@@ -72,8 +72,8 @@ for (const item of registry.items) {
       const shipped = targetsByItem
         .get(item.name)
         .some((target) => target === wanted || target.replace(/\.tsx?$/, "") === wanted);
-      // ui/* comes from the shadcn default registry via registryDependencies.
-      if (!shipped && !wanted.startsWith("components/ui/")) {
+      // ui/* comes from the shadcn default registry via registryDependencies; lib/utils (cn) from `shadcn init`.
+      if (!shipped && !wanted.startsWith("components/ui/") && wanted !== "lib/utils") {
         fail(
           `registry: ${item.name} -> ${file.path} imports "${specifier}" but the item ships nothing at that target`,
         );

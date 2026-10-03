@@ -38,7 +38,7 @@
       "name": "opencode-commands",
       "type": "registry:file",
       "title": "OpenCode commands (project-scope)",
-      "description": "Adapted new-frontend and migrate-ui commands for OpenCode, which does not load Claude Code plugins. Install alongside agent-skill — OpenCode natively reads the .claude/skills/ path that item writes.",
+      "description": "Adapted new-frontend and migrate-ui commands for OpenCode, which does not load Claude Code plugins. Install alongside agent-skill \u2014 OpenCode natively reads the .claude/skills/ path that item writes.",
       "files": [
         {
           "path": "opencode/commands/new-frontend.md",
@@ -70,7 +70,7 @@
       "name": "query-setup",
       "type": "registry:lib",
       "title": "TanStack Query defaults",
-      "description": "Shared QueryClient configuration so retry, staleness and refetch behaviour is identical everywhere. Bundles api.ts because query.ts imports ApiError from it — a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
+      "description": "Shared QueryClient configuration so retry, staleness and refetch behaviour is identical everywhere. Bundles api.ts because query.ts imports ApiError from it \u2014 a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
       "dependencies": ["@tanstack/react-query"],
       "files": [
         {
@@ -102,7 +102,7 @@
       "name": "theme-provider",
       "type": "registry:component",
       "title": "Theme provider",
-      "description": "Defaults to the OS light/dark preference and keeps the .dark class in sync with it (including live OS changes), with an optional persisted light/dark override. Wrap the app in <ThemeProvider> — without it the .dark class in theme.css is never toggled and the app always renders light, regardless of the system setting.",
+      "description": "Defaults to the OS light/dark preference and keeps the .dark class in sync with it (including live OS changes), with an optional persisted light/dark override. Wrap the app in <ThemeProvider> \u2014 without it the .dark class in theme.css is never toggled and the app always renders light, regardless of the system setting.",
       "dependencies": [],
       "files": [
         {
@@ -116,7 +116,7 @@
       "name": "theme-toggle",
       "type": "registry:component",
       "title": "Theme toggle button",
-      "description": "Sun/moon icon button that flips between light and dark. Bundles theme-provider.tsx so it installs standalone — a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
+      "description": "Sun/moon icon button that flips between light and dark. Bundles theme-provider.tsx so it installs standalone \u2014 a bare registryDependencies entry can't point back into this same registry, only the shadcn default one.",
       "registryDependencies": ["button"],
       "dependencies": ["lucide-react"],
       "files": [
@@ -129,6 +129,46 @@
           "path": "src/components/theme-toggle.tsx",
           "type": "registry:component",
           "target": "components/theme-toggle.tsx"
+        }
+      ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:ui",
+      "title": "Toast + notifications",
+      "description": "Base UI toast wrapper (<Toaster/> mounted once at the app root) and a notifications.success/error/info/warning facade. Errors default to a 10s timeout; pass { persistent: true } to keep a toast until dismissed. Requires the theme tokens and an app-level <Toaster />.",
+      "registryDependencies": ["button"],
+      "dependencies": ["@base-ui/react", "lucide-react"],
+      "files": [
+        {
+          "path": "src/components/ui/toast.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/toast.tsx"
+        },
+        {
+          "path": "src/lib/notifications.ts",
+          "type": "registry:lib",
+          "target": "lib/notifications.ts"
+        }
+      ]
+    },
+    {
+      "name": "action-button",
+      "type": "registry:component",
+      "title": "Action button + useAsyncAction",
+      "description": "Icon button with idle / spinner / green-or-red result states that persist until the next click, plus the useAsyncAction hook that drives it. Pair with the toast item for the result text. Bundles the hook because a registry item cannot reference another item in this registry.",
+      "registryDependencies": ["button"],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "src/components/action-button.tsx",
+          "type": "registry:component",
+          "target": "components/action-button.tsx"
+        },
+        {
+          "path": "src/hooks/use-async-action.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-async-action.ts"
         }
       ]
     }
