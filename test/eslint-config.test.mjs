@@ -50,8 +50,8 @@ test("the mechanical DESIGN.md rules fire", async () => {
   const counts = await lintFixture("violations.tsx");
   assert.equal(
     counts.get("no-restricted-imports"),
-    3,
-    "deep relative, primitive and moment imports",
+    4,
+    "deep relative, both primitive packages (@base-ui-components, @base-ui) and moment imports",
   );
   assert.equal(counts.get("no-restricted-syntax"), 1, "inline style prop");
   assert.equal(counts.get("@typescript-eslint/no-explicit-any"), 1);

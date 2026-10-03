@@ -131,6 +131,46 @@
           "target": "components/theme-toggle.tsx"
         }
       ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:ui",
+      "title": "Toast + notifications",
+      "description": "Base UI toast wrapper (<Toaster/> mounted once at the app root) and a notifications.success/error/info/warning facade. Errors default to a 10s timeout; pass { persistent: true } to keep a toast until dismissed. Requires the theme tokens and an app-level <Toaster />.",
+      "registryDependencies": ["button"],
+      "dependencies": ["@base-ui/react", "lucide-react"],
+      "files": [
+        {
+          "path": "src/components/ui/toast.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/toast.tsx"
+        },
+        {
+          "path": "src/lib/notifications.ts",
+          "type": "registry:lib",
+          "target": "lib/notifications.ts"
+        }
+      ]
+    },
+    {
+      "name": "action-button",
+      "type": "registry:component",
+      "title": "Action button + useAsyncAction",
+      "description": "Icon button with idle / spinner / green-or-red result states that persist until the next click, plus the useAsyncAction hook that drives it. Pair with the toast item for the result text. Bundles the hook because a registry item cannot reference another item in this registry.",
+      "registryDependencies": ["button"],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "src/components/action-button.tsx",
+          "type": "registry:component",
+          "target": "components/action-button.tsx"
+        },
+        {
+          "path": "src/hooks/use-async-action.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-async-action.ts"
+        }
+      ]
     }
   ]
 }

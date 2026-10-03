@@ -25,7 +25,9 @@ skill is the fallback and the summary; the file is the contract.
 - TanStack Query for anything from a server. Zustand only for cross-cutting
   client state. `useState` for everything else.
 - react-hook-form + zod for forms. TanStack Table for tables. date-fns for dates.
-- lucide-react for icons, sonner for toasts.
+- lucide-react for icons. Toasts via the kit's `toast` item (`notifications.*`), never `sonner`.
+- Async actions with a visible outcome use `ActionButton` (icon + spinner + tinted result) with the
+  result text in a toast — see DESIGN.md section 5.1.
 
 Do not introduce a library outside this list without asking first.
 

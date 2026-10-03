@@ -3,6 +3,7 @@
 // style prop, no `any`.
 import "../../some/deep/module";
 import "@base-ui-components/react/dialog";
+import "@base-ui/react/dialog";
 import "moment";
 
 export function Widget({ data }: { data: any }) {
