@@ -18,10 +18,10 @@ review and is expected to change as it moves.
 
 | Repository | Role | Preset state |
 |---|---|---|
-| `frontend-kit` | the kit itself | preset `b0` (README); peer range `typescript >=5.5 <7` |
-| `search-books` | consumer | preset `b0` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
-| `prowlarr-watcher/frontend` | consumer | preset `b0` — same state as `search-books` |
-| `audiobook-manager/client` | consumer | **aligned** — `b0`/Base UI since Phase 2.5 (PR #1452) |
+| `frontend-kit` | the kit itself | preset `b18OWG` (README; was `b0` before the amber theme change); peer range `typescript >=5.5 <7` |
+| `search-books` | consumer | preset `b0` until its theme-change PR merges, then `b18OWG` (`preset resolve` → style `nova`); `components.json` records `style: base-nova`, `baseColor: neutral`, `iconLibrary: lucide` |
+| `prowlarr-watcher/frontend` | consumer | preset `b0` until its theme-change PR merges, then `b18OWG` — same state as `search-books` |
+| `audiobook-manager/client` | consumer | **aligned** — Base UI since Phase 2.5 (PR #1452); amber theme already trialled, final sync pending the kit release |
 
 ## Phases
 

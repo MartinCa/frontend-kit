@@ -174,10 +174,10 @@ pnpm dlx shadcn@latest apply --preset b18OWG --only theme,font   # targeted
 ```
 
 `init --preset b18OWG` does the same for a project that was never on a preset.
-Known drift is tracked in [PLAN.md](./PLAN.md): `audiobook-manager/client` is
-currently on the old default scaffold (`style: default`, `baseColor: slate`)
-and is queued for alignment in Phase 2.5 — after the frontend-kit changes land,
-before the general consumer review.
+Known drift is tracked in [PLAN.md](./PLAN.md). The earlier drift
+(`audiobook-manager/client` on the old default scaffold, `style: default` /
+`baseColor: slate`) was fixed in Phase 2.5 (audiobook-manager PR #1452); all
+consumers now record `style: base-nova` and `baseColor: neutral`.
 
 ### Exact timestamps
 
