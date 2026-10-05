@@ -26,6 +26,23 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import prettier from "eslint-config-prettier";
 
+// Selectors for DESIGN.md section 3: an inline handler that only navigates. Built from parts so
+// the call shape, the wrapper (`void`) and the body shape (expression vs one-statement block)
+// stay in one place.
+const navigationHandler =
+  "JSXAttribute[name.name=/^(onClick|onSelect|onValueChange)$/] > JSXExpressionContainer > ArrowFunctionExpression";
+const notExempt =
+  ":not(:has(ObjectExpression:not(Property > ObjectExpression) > Property[key.name='replace'][value.value=true])):not([arguments.0.type='UnaryExpression']):not([arguments.0.raw=/^\\d/])";
+const navigateCalls = [
+  `CallExpression[callee.name='navigate']${notExempt}`,
+  `CallExpression[callee.object.name='router'][callee.property.name='navigate']${notExempt}`,
+];
+const navigationHandlerSelectors = ["", "UnaryExpression[operator='void'] > "].flatMap((wrapper) =>
+  ["", "BlockStatement[body.length=1] > ExpressionStatement > "].flatMap((body) =>
+    navigateCalls.map((call) => `${navigationHandler} > ${body}${wrapper}${call}`),
+  ),
+);
+
 /**
  * @param {object} [options]
  * @param {string[]} [options.ignores] Extra ignore globs.
@@ -113,6 +130,19 @@ export default function config({ ignores = [] } = {}) {
               "CallExpression[callee.name='create'] CallExpression[callee.name='fetch'], CallExpression[callee.callee.name='create'] CallExpression[callee.name='fetch']",
             message:
               "Do not fetch inside a Zustand store. Server state belongs in TanStack Query. See DESIGN.md section 2.",
+          },
+          {
+            // A click/select/value-change handler whose only job is `navigate(...)`: the element
+            // is a navigation control and must render as a link, not a button. Matches the arrow
+            // function directly under the attribute, with a call, `void call` or a one-statement
+            // block as its body, for `navigate(...)` and `router.navigate(...)` (only that
+            // object name, so an unrelated `.navigate()` is never claimed). Deliberately exempt:
+            // `replace: true` in a top-level options object, in any argument position (URL state, no link to render) and numeric arguments (`navigate(-1)`,
+            // history). A handler that does other work too, or is passed by reference, is left
+            // alone: this is a heuristic, not a guarantee.
+            selector: navigationHandlerSelectors.join(", "),
+            message:
+              "Navigation must be a link, not onClick + navigate(): render <Link> via `render` (LinkButton, DropdownMenuItem render={<Link/>}) so middle-click and Open in new tab work. See DESIGN.md section 3. If there is genuinely no link to render, disable this line with a reason.",
           },
           {
             selector: "JSXAttribute[name.name='style']",

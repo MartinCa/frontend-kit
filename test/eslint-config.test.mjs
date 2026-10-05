@@ -57,6 +57,15 @@ test("the mechanical DESIGN.md rules fire", async () => {
   assert.equal(counts.get("@typescript-eslint/no-explicit-any"), 1);
 });
 
+test("an onClick/onSelect/onValueChange that only navigates is flagged, other handlers are not", async () => {
+  const counts = await lintFixture("navigate.tsx");
+  assert.equal(
+    counts.get("no-restricted-syntax"),
+    12,
+    "expected exactly the 12 navigate-only handlers flagged (8 shapes + onValueChange + string path + replace: false + nested replace): not replace: true/history calls, an unrelated .navigate(), the redirect-after-work, onKeyDown or plain handlers",
+  );
+});
+
 test("vendored directories are exempt", async () => {
   const config = await eslint.calculateConfigForFile(
     path.join(fixtures, "src/components/ui/button.tsx"),

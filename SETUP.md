@@ -331,7 +331,8 @@ pnpm dlx shadcn@latest add \
   MartinCa/frontend-kit/theme \
   MartinCa/frontend-kit/theme-provider \
   MartinCa/frontend-kit/toast \
-  MartinCa/frontend-kit/action-button
+  MartinCa/frontend-kit/action-button \
+  MartinCa/frontend-kit/link-button
 
 pnpm add @tanstack/react-query @tanstack/react-router zustand \
   react-hook-form zod date-fns lucide-react
