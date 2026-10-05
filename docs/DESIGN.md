@@ -187,30 +187,38 @@ not nest dual scrollbars:
 
 **Navigation items must be links, not `onClick` + `navigate()`.** Base UI's
 `DropdownMenuItem`, `TabsTrigger` and `Button` render a `<div role="menuitem">`, a
-`<button>` and a `<button>`. Giving one an `onClick`/`onSelect`/`onValueChange` that calls the
+`<button role="tab">` and a `<button>`. Giving one an `onClick`/`onSelect`/`onValueChange` that calls the
 router's `navigate()` works on a plain click and silently loses everything else a link gives
 you: middle-click, Ctrl/Cmd-click, "Open in new tab", "Copy link address", the URL preview on
 hover, and link semantics for screen readers. Nothing errors; it is only ever noticed by someone
-trying to open a second tab. Render the real link through `render`. `Button` and `TabsTrigger`
-need `nativeButton={false}` because they assume a `<button>` (Base UI warns when `render` swaps in
-an `<a>`); a menu item already defaults to non-native, so it needs nothing extra:
+trying to open a second tab. Render the real link instead:
+
+- **A button-looking link:** `LinkButton` (kit item `link-button`). Do not use
+  `<Button nativeButton={false} render={<Link/>}>`: Base UI then adds `role="button"` to the
+  anchor, so it is announced as a button, and Base UI's own docs say links should not be
+  rendered through `Button`. `LinkButton` applies `buttonVariants` to the link itself.
+- **A menu item:** `render` on `DropdownMenuItem`. A menu item is `role="menuitem"` by design
+  and already defaults to non-native, so it needs nothing extra and still closes the menu.
+- **A route tab:** `render` on `TabsTrigger`, plus `nativeButton={false}` because a tab
+  defaults to a native `<button>`.
 
 ```tsx
-// Button: install MartinCa/frontend-kit/link-button, which sets nativeButton={false} for you
 <LinkButton variant="ghost" render={<Link to="/library" />}>Back to Library</LinkButton>
 
-// Menu item: closes the menu on click like any other item
 <DropdownMenuItem render={<Link to="/settings/library" />}>Library settings</DropdownMenuItem>
 
-// Tabs that change the route: render each trigger as a link, do not navigate in onValueChange
 <TabsTrigger value="series" nativeButton={false} render={<Link to="/library/series" />}>
   Series
 </TabsTrigger>
 ```
 
 `navigate()` is still right when there is no link to render: a redirect after a mutation, a
-search-on-Enter handler, or writing URL state with `replace: true`. The shared ESLint preset
-flags the clear-cut case, an inline `onClick`/`onSelect` whose only job is `navigate(...)`.
+search-on-Enter handler, history-style `navigate(-1)`, or writing URL state with `replace: true`.
+The shared ESLint preset flags the clear-cut case, an inline `onClick`/`onSelect`/`onValueChange`
+arrow whose only job is `navigate(...)` or `router.navigate(...)`, and exempts `replace` and
+numeric (history) calls. It cannot see handlers passed by reference or ones that do other work
+too, and a `.navigate()` call on anything not named `router` is never matched. If it flags a call
+that really has no link to render, disable that line with a reason.
 (Base UI also ships `Menu.LinkItem`, but it defaults `closeOnClick` to `false` and the vendored
 `dropdown-menu.tsx` does not export it; `DropdownMenuItem` + `render` avoids both.)
 
@@ -333,9 +341,10 @@ Non-negotiable, and not worth discussing in review because it is written here:
 - Keyboard reachable, with a visible focus ring. Never remove the outline without a
   replacement.
 - Real semantics: `<button>` for actions, `<a>` for navigation, labelled inputs. A `<div>`
-  with an `onClick` is a defect, and so is a button, menu item or tab whose `onClick` just calls
-  `navigate()`: if it goes to a URL it must render as a link (`LinkButton`, or `render={<Link/>}`
-  — see section 3), or middle-click and "Open in new tab" stop working.
+  with an `onClick` is a defect, and so is a button, menu item or tab whose click, select or
+  value-change handler just calls `navigate()`: if it goes to a URL it must render as a link
+  (`LinkButton`, or `render={<Link/>}` — see section 3), or middle-click and "Open in new tab" stop
+  working.
 - `prefers-reduced-motion` respected.
 - Every async surface has three defined states: loading (skeleton, not a spinner-only
   screen), empty (with an action to take), and error (what failed and what to do next).

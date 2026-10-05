@@ -176,8 +176,9 @@
       "name": "link-button",
       "type": "registry:component",
       "title": "Link button",
-      "description": "A Button that renders as a real link (<LinkButton render={<Link to=\"/x\" />}>). Bakes in nativeButton={false}, which Base UI requires when render swaps the button for an <a>, so navigation keeps middle-click, Ctrl/Cmd-click and Open in new tab.",
+      "description": "A real link styled as a Button (<LinkButton render={<Link to=\"/x\" />}>). Applies buttonVariants to the rendered <a> instead of wrapping Base UI's Button, which would add role=\"button\" and hide the link semantics; navigation keeps middle-click, Ctrl/Cmd-click, Open in new tab and screen-reader link announcement.",
       "registryDependencies": ["button"],
+      "dependencies": ["class-variance-authority", "cn"],
       "files": [
         {
           "path": "src/components/link-button.tsx",
