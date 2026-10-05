@@ -171,6 +171,20 @@
           "target": "hooks/use-async-action.ts"
         }
       ]
+    },
+    {
+      "name": "link-button",
+      "type": "registry:component",
+      "title": "Link button",
+      "description": "A Button that renders as a real link (<LinkButton render={<Link to=\"/x\" />}>). Bakes in nativeButton={false}, which Base UI requires when render swaps the button for an <a>, so navigation keeps middle-click, Ctrl/Cmd-click and Open in new tab.",
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "src/components/link-button.tsx",
+          "type": "registry:component",
+          "target": "components/link-button.tsx"
+        }
+      ]
     }
   ]
 }

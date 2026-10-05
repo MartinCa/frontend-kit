@@ -185,6 +185,35 @@ not nest dual scrollbars:
 </DialogContent>
 ```
 
+**Navigation items must be links, not `onClick` + `navigate()`.** Base UI's
+`DropdownMenuItem`, `TabsTrigger` and `Button` render a `<div role="menuitem">`, a
+`<button>` and a `<button>`. Giving one an `onClick`/`onSelect`/`onValueChange` that calls the
+router's `navigate()` works on a plain click and silently loses everything else a link gives
+you: middle-click, Ctrl/Cmd-click, "Open in new tab", "Copy link address", the URL preview on
+hover, and link semantics for screen readers. Nothing errors; it is only ever noticed by someone
+trying to open a second tab. Render the real link through `render`. `Button` and `TabsTrigger`
+need `nativeButton={false}` because they assume a `<button>` (Base UI warns when `render` swaps in
+an `<a>`); a menu item already defaults to non-native, so it needs nothing extra:
+
+```tsx
+// Button: install MartinCa/frontend-kit/link-button, which sets nativeButton={false} for you
+<LinkButton variant="ghost" render={<Link to="/library" />}>Back to Library</LinkButton>
+
+// Menu item: closes the menu on click like any other item
+<DropdownMenuItem render={<Link to="/settings/library" />}>Library settings</DropdownMenuItem>
+
+// Tabs that change the route: render each trigger as a link, do not navigate in onValueChange
+<TabsTrigger value="series" nativeButton={false} render={<Link to="/library/series" />}>
+  Series
+</TabsTrigger>
+```
+
+`navigate()` is still right when there is no link to render: a redirect after a mutation, a
+search-on-Enter handler, or writing URL state with `replace: true`. The shared ESLint preset
+flags the clear-cut case, an inline `onClick`/`onSelect` whose only job is `navigate(...)`.
+(Base UI also ships `Menu.LinkItem`, but it defaults `closeOnClick` to `false` and the vendored
+`dropdown-menu.tsx` does not export it; `DropdownMenuItem` + `render` avoids both.)
+
 **Other overlay components (`sheet.tsx`, `popover.tsx`, `dropdown-menu.tsx`):**
 - **`sheet.tsx` (`SheetContent`)**: Ensure tall content has `overflow-y-auto` and viewport-safe
   bounds (`max-h-[100dvh]`) so actions remain reachable on mobile.
@@ -304,7 +333,9 @@ Non-negotiable, and not worth discussing in review because it is written here:
 - Keyboard reachable, with a visible focus ring. Never remove the outline without a
   replacement.
 - Real semantics: `<button>` for actions, `<a>` for navigation, labelled inputs. A `<div>`
-  with an `onClick` is a defect.
+  with an `onClick` is a defect, and so is a button, menu item or tab whose `onClick` just calls
+  `navigate()`: if it goes to a URL it must render as a link (`LinkButton`, or `render={<Link/>}`
+  — see section 3), or middle-click and "Open in new tab" stop working.
 - `prefers-reduced-motion` respected.
 - Every async surface has three defined states: loading (skeleton, not a spinner-only
   screen), empty (with an action to take), and error (what failed and what to do next).

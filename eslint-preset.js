@@ -115,6 +115,25 @@ export default function config({ ignores = [] } = {}) {
               "Do not fetch inside a Zustand store. Server state belongs in TanStack Query. See DESIGN.md section 2.",
           },
           {
+            // A click/select handler whose only job is `navigate(...)`: the element is a
+            // navigation control and must render as a link, not a button. Matches the arrow
+            // function directly under the attribute, with a call, `void call` or a one-statement
+            // block as its body, for `navigate(...)` and `router.navigate(...)`. A handler that
+            // does other work too (a mutation, then a redirect) is left alone on purpose.
+            selector: [
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > CallExpression[callee.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > CallExpression[callee.property.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > UnaryExpression[operator='void'] > CallExpression[callee.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > UnaryExpression[operator='void'] > CallExpression[callee.property.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > BlockStatement[body.length=1] > ExpressionStatement > CallExpression[callee.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > BlockStatement[body.length=1] > ExpressionStatement > CallExpression[callee.property.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > BlockStatement[body.length=1] > ExpressionStatement > UnaryExpression[operator='void'] > CallExpression[callee.name='navigate']",
+              "JSXAttribute[name.name=/^(onClick|onSelect)$/] > JSXExpressionContainer > ArrowFunctionExpression > BlockStatement[body.length=1] > ExpressionStatement > UnaryExpression[operator='void'] > CallExpression[callee.property.name='navigate']",
+            ].join(", "),
+            message:
+              "Navigation must be a link, not onClick + navigate(): render <Link> via `render` (LinkButton, DropdownMenuItem render={<Link/>}) so middle-click and Open in new tab work. See DESIGN.md section 3.",
+          },
+          {
             selector: "JSXAttribute[name.name='style']",
             message:
               "Use Tailwind utilities and theme tokens instead of inline styles. See DESIGN.md section 5.",

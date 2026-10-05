@@ -8,7 +8,7 @@ One repo, three channels of distribution, plus the OpenCode consumption target:
 - **npm package** `@martinrun/frontend-config` — ESLint, tsconfig, Prettier.
   Updated by Renovate.
 - **shadcn registry** — `DESIGN.md`, the API client, query defaults, theme
-  tokens, the toast + `notifications` helper, `ActionButton` / `useAsyncAction`, the vendored skill (`agent-skill`), and the OpenCode command
+  tokens, the toast + `notifications` helper, `ActionButton` / `useAsyncAction`, `LinkButton`, the vendored skill (`agent-skill`), and the OpenCode command
   adaptations (`opencode-commands`). Updated deliberately with
   `shadcn add --overwrite`.
 - **Claude Code plugin** — the conventions skill and the `new-frontend` /
