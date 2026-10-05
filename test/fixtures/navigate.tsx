@@ -1,4 +1,4 @@
-// Fixture for the navigation-is-a-link rule: an onClick/onSelect that only calls navigate()
+// Fixture for the navigation-is-a-link rule: an onClick/onSelect/onValueChange that only calls navigate()
 // must be flagged; handlers that do other work, and non-click handlers, must not be.
 declare function navigate(options: { to: string }): Promise<void>;
 declare const router: { navigate: (options: { to: string }) => Promise<void> };
