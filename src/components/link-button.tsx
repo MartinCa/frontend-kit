@@ -1,4 +1,4 @@
-import { cloneElement, type ComponentProps, type ReactElement } from "react";
+import { cloneElement, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import type { VariantProps } from "class-variance-authority";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -28,13 +28,12 @@ export function LinkButton({
   children,
   ...props
 }: LinkButtonProps) {
-  return cloneElement(
-    render,
-    {
-      "data-slot": "button",
-      ...props,
-      className: cn(buttonVariants({ variant, size }), render.props.className, className),
-    } as Partial<{ className: string }>,
-    children,
-  );
+  return cloneElement(render, {
+    "data-slot": "button",
+    ...props,
+    className: cn(buttonVariants({ variant, size }), render.props.className, className),
+    // Only override the element's own children when LinkButton was given some: a third
+    // cloneElement argument replaces them even when it is undefined.
+    ...(children !== undefined && { children }),
+  } as Partial<{ className: string; children: ReactNode }>);
 }

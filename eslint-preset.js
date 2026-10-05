@@ -32,7 +32,7 @@ import prettier from "eslint-config-prettier";
 const navigationHandler =
   "JSXAttribute[name.name=/^(onClick|onSelect|onValueChange)$/] > JSXExpressionContainer > ArrowFunctionExpression";
 const notExempt =
-  ":not(:has(ObjectExpression > Property[key.name='replace'])):not([arguments.0.type='UnaryExpression']):not([arguments.0.raw=/^\\d/])";
+  ":not(:has(ObjectExpression:not(Property > ObjectExpression) > Property[key.name='replace'][value.value=true])):not([arguments.0.type='UnaryExpression']):not([arguments.0.raw=/^\\d/])";
 const navigateCalls = [
   `CallExpression[callee.name='navigate']${notExempt}`,
   `CallExpression[callee.object.name='router'][callee.property.name='navigate']${notExempt}`,
@@ -137,7 +137,7 @@ export default function config({ ignores = [] } = {}) {
             // function directly under the attribute, with a call, `void call` or a one-statement
             // block as its body, for `navigate(...)` and `router.navigate(...)` (only that
             // object name, so an unrelated `.navigate()` is never claimed). Deliberately exempt:
-            // `replace` (URL state, no link to render) and numeric arguments (`navigate(-1)`,
+            // `replace: true` in a top-level options object, in any argument position (URL state, no link to render) and numeric arguments (`navigate(-1)`,
             // history). A handler that does other work too, or is passed by reference, is left
             // alone: this is a heuristic, not a guarantee.
             selector: navigationHandlerSelectors.join(", "),

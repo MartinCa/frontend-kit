@@ -34,13 +34,16 @@ export function Menu() {
         }}
       />
 
-      {/* flagged: a tab's onValueChange and a plain string path */}
+      {/* flagged: a tab's onValueChange, a string path, replace: false and a nested replace */}
       <button onValueChange={() => navigate({ to: "/i" })} />
       <button onClick={() => navigate("/j")} />
+      <button onClick={() => navigate({ to: "/n", replace: false })} />
+      <button onClick={() => navigate({ to: "/o", options: { replace: true } })} />
 
-      {/* not flagged: URL state (replace), history, and an unrelated .navigate() */}
+      {/* not flagged: URL state (replace: true, in either argument position), history, and an unrelated .navigate() */}
       <button onClick={() => navigate({ to: "/k", replace: true })} />
       <button onClick={() => void navigate({ to: "/l", replace: true })} />
+      <button onClick={() => navigate("/p", { replace: true })} />
       <button onClick={() => navigate(-1)} />
       <button onClick={() => navigate(1)} />
       <button onClick={() => carousel.navigate({ to: "/m" })} />

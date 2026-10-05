@@ -61,8 +61,8 @@ test("an onClick/onSelect that only navigates is flagged, other handlers are not
   const counts = await lintFixture("navigate.tsx");
   assert.equal(
     counts.get("no-restricted-syntax"),
-    10,
-    "expected exactly the 10 navigate-only handlers flagged (8 shapes + onValueChange + string path): not replace/history calls, an unrelated .navigate(), the redirect-after-work, onKeyDown or plain handlers",
+    12,
+    "expected exactly the 12 navigate-only handlers flagged (8 shapes + onValueChange + string path + replace: false + nested replace): not replace: true/history calls, an unrelated .navigate(), the redirect-after-work, onKeyDown or plain handlers",
   );
 });
 
