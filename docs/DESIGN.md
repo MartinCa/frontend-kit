@@ -215,8 +215,9 @@ trying to open a second tab. Render the real link instead:
 `navigate()` is still right when there is no link to render: a redirect after a mutation, a
 search-on-Enter handler, history-style `navigate(-1)`, or writing URL state with `replace: true`.
 The shared ESLint preset flags the clear-cut case, an inline `onClick`/`onSelect`/`onValueChange`
-arrow whose only job is `navigate(...)` or `router.navigate(...)`, and exempts `replace` and
-numeric (history) calls. It cannot see handlers passed by reference or ones that do other work
+arrow whose only job is `navigate(...)` or `router.navigate(...)`, and exempts a literal
+`replace: true` (in a top-level options object) and numeric (history) calls. A non-literal
+`replace: someVar` is flagged, so disable that line with a reason. It cannot see handlers passed by reference or ones that do other work
 too, and a `.navigate()` call on anything not named `router` is never matched. If it flags a call
 that really has no link to render, disable that line with a reason.
 (Base UI also ships `Menu.LinkItem`, but it defaults `closeOnClick` to `false` and the vendored

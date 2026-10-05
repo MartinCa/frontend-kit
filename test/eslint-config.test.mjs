@@ -57,7 +57,7 @@ test("the mechanical DESIGN.md rules fire", async () => {
   assert.equal(counts.get("@typescript-eslint/no-explicit-any"), 1);
 });
 
-test("an onClick/onSelect that only navigates is flagged, other handlers are not", async () => {
+test("an onClick/onSelect/onValueChange that only navigates is flagged, other handlers are not", async () => {
   const counts = await lintFixture("navigate.tsx");
   assert.equal(
     counts.get("no-restricted-syntax"),
