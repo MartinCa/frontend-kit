@@ -573,7 +573,7 @@ jobs:
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Lint
@@ -768,7 +768,8 @@ exfiltration attempt if an agent were ever tricked by something it read.
 ```sh
 #!/usr/bin/env bash
 set -euo pipefail
-corepack enable
+# Node 26 no longer bundles Corepack
+npm install --global pnpm
 pnpm install --frozen-lockfile
 ```
 
